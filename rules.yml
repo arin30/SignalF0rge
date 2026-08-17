@@ -41,6 +41,20 @@ rules:
     severity: medium
     mitre: ["T1110"]
 
+  - id: AUTH-004
+    title: Password spraying across multiple accounts
+    description: One source generates failed authentication attempts against several distinct user accounts in a short interval.
+    kind: distinct_count
+    source_type: auth
+    match:
+      action: login_failed
+    group_by: src_ip
+    distinct_field: user
+    threshold: 5
+    window_minutes: 10
+    severity: high
+    mitre: ["T1110.003"]
+
   - id: ENDPOINT-001
     title: Suspicious PowerShell execution
     description: PowerShell command contains common offensive or download-execution indicators.
@@ -181,6 +195,22 @@ rules:
     severity: critical
     mitre: ["T1562.004"]
 
+  - id: BEHAVIOR-001
+    title: PowerShell followed by credential access
+    description: PowerShell execution is followed by LSASS or credential dumping activity on the same host within a short interval.
+    kind: multi_sequence
+    group_by: host
+    window_minutes: 10
+    steps:
+      - source_type: endpoint
+        contains:
+          command: ["powershell"]
+      - source_type: endpoint
+        contains:
+          message: ["lsass", "credential dump", "mimikatz"]
+    severity: critical
+    mitre: ["T1059.001", "T1003.001"]
+
   - id: NET-001
     title: Connection to high-risk destination port
     description: Connection to a commonly abused management or command-and-control port.
@@ -202,3 +232,48 @@ rules:
     window_minutes: 5
     severity: medium
     mitre: ["T1046"]
+
+  - id: NET-003
+    title: Rapid scan across destination ports
+    description: One source contacts many distinct destination ports on a target within a short interval.
+    kind: distinct_count
+    source_type: network
+    group_by: src_ip
+    distinct_field: dst_port
+    threshold: 10
+    window_minutes: 2
+    severity: medium
+    mitre: ["T1046"]
+
+  - id: NET-004
+    title: Rapid connections across many hosts
+    description: One source contacts many distinct destination hosts in a short interval, consistent with network discovery or scanning behavior.
+    kind: distinct_count
+    source_type: network
+    group_by: src_ip
+    distinct_field: dst_ip
+    threshold: 10
+    window_minutes: 5
+    severity: medium
+    mitre: ["T1046"]
+
+  - id: INCIDENT-001
+    title: Multi-stage account compromise behavior
+    description: A successful authentication is followed by encoded PowerShell, credential access, and an outbound high-risk connection within one correlated activity chain.
+    kind: cross_source_sequence
+    group_by: correlation_id
+    window_minutes: 20
+    steps:
+      - source_type: auth
+        match:
+          action: login_success
+      - source_type: endpoint
+        contains:
+          command: ["-enc ", "-encodedcommand"]
+      - source_type: endpoint
+        contains:
+          message: ["lsass", "credential dump", "mimikatz"]
+      - source_type: network
+        ports: [4444, 5900]
+    severity: critical
+    mitre: ["T1078", "T1059.001", "T1003.001"]
