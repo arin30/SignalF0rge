@@ -1,0 +1,18 @@
+title: Suspicious PowerShell Encoded Command
+id: 0f29b0df-9b8c-4b66-a22e-signalf0rge001
+status: experimental
+description: Demonstration Sigma rule for encoded PowerShell execution.
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection:
+    Image|endswith: '\\powershell.exe'
+    CommandLine|contains:
+      - '-enc'
+      - '-EncodedCommand'
+  condition: selection
+level: high
+tags:
+  - attack.execution
+  - attack.t1059.001
