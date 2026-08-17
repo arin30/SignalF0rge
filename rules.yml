@@ -1,0 +1,91 @@
+rules:
+  - id: AUTH-001
+    title: Repeated failed authentication
+    description: Multiple failed logins from the same source IP in a short interval.
+    kind: threshold
+    source_type: auth
+    match:
+      action: login_failed
+    group_by: src_ip
+    threshold: 5
+    window_minutes: 10
+    severity: medium
+    mitre: ["T1110"]
+
+  - id: AUTH-002
+    title: Successful login after repeated failures
+    description: A successful login occurs shortly after multiple failures for the same user.
+    kind: sequence
+    source_type: auth
+    sequence:
+      first:
+        action: login_failed
+      second:
+        action: login_success
+    group_by: user
+    threshold: 5
+    window_minutes: 15
+    severity: high
+    mitre: ["T1110", "T1078"]
+
+  - id: ENDPOINT-001
+    title: Suspicious PowerShell execution
+    description: PowerShell command contains common offensive or download-execution indicators.
+    kind: contains
+    source_type: endpoint
+    field: command
+    any: ["Invoke-WebRequest", "IEX(", "DownloadString", "FromBase64String", "Invoke-Mimikatz"]
+    severity: high
+    mitre: ["T1059.001"]
+
+  - id: ENDPOINT-002
+    title: Encoded PowerShell command
+    description: PowerShell was launched with encoded command arguments.
+    kind: contains
+    source_type: endpoint
+    field: command
+    any: ["-enc ", "-encodedcommand"]
+    severity: high
+    mitre: ["T1059.001", "T1027"]
+
+  - id: ENDPOINT-003
+    title: Local administrator account creation
+    description: A local account was added to an administrators group.
+    kind: contains
+    source_type: endpoint
+    field: message
+    any: ["added to administrators", "added to local administrators"]
+    severity: high
+    mitre: ["T1136.001", "T1098"]
+
+  - id: ENDPOINT-004
+    title: Credential dumping indicator
+    description: Endpoint telemetry references credential dumping behavior or LSASS access.
+    kind: contains
+    source_type: endpoint
+    field: message
+    any: ["lsass", "credential dump", "mimikatz"]
+    severity: critical
+    mitre: ["T1003"]
+
+  - id: NET-001
+    title: Connection to high-risk destination port
+    description: Connection to a commonly abused management or command-and-control port.
+    kind: network_port
+    source_type: network
+    ports: [22, 23, 3389, 4444, 5900]
+    severity: medium
+    mitre: ["T1021"]
+
+  - id: NET-002
+    title: Repeated denied firewall connections
+    description: Multiple denied network events originate from the same source.
+    kind: threshold
+    source_type: network
+    match:
+      action: denied
+    group_by: src_ip
+    threshold: 8
+    window_minutes: 5
+    severity: medium
+    mitre: ["T1046"]
