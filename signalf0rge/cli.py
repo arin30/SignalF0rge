@@ -1,6 +1,7 @@
 import argparse
 from pathlib import Path
 from .parser import load_jsonl
+from .telemetry import load_events
 from .rules import load_rules
 from .engine import analyze
 from .report import write_json, write_html
@@ -12,8 +13,9 @@ def main():
     parser = argparse.ArgumentParser(prog="signalf0rge")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    a = sub.add_parser("analyze", help="Analyze normalized JSONL security events")
+    a = sub.add_parser("analyze", help="Analyze security telemetry")
     a.add_argument("input")
+    a.add_argument("--format", choices=["normalized", "windows"], default="normalized")
     a.add_argument("--rules", default="rules.yml")
     a.add_argument("--out", default="output")
 
@@ -41,7 +43,7 @@ def main():
         print(f"Threat intelligence results: {path}")
         return
 
-    events = load_jsonl(args.input)
+    events = load_events(args.input, args.format)
     rules = load_rules(args.rules)
     findings = analyze(events, rules)
     out = Path(args.out)
