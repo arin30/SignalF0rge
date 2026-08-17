@@ -1,0 +1,33 @@
+{
+  "type": "bundle",
+  "id": "bundle--b8d2c2e0-08cb-4f08-9b1d-0f6a8dc9717e",
+  "objects": [
+    {
+      "type": "indicator",
+      "spec_version": "2.1",
+      "id": "indicator--f12d929b-c77d-4b8e-b4e5-bcb580a0df10",
+      "created": "2026-08-17T18:00:00Z",
+      "modified": "2026-08-17T18:00:00Z",
+      "name": "Demo command and control address",
+      "description": "Synthetic training indicator used by SignalF0rge sample telemetry.",
+      "pattern_type": "stix",
+      "pattern": "[ipv4-addr:value = '8.8.8.8']",
+      "valid_from": "2026-08-17T18:00:00Z",
+      "confidence": 80,
+      "labels": ["malicious-activity", "command-and-control"]
+    },
+    {
+      "type": "indicator",
+      "spec_version": "2.1",
+      "id": "indicator--7e57905b-7fa4-45be-9442-a5f26b3f9931",
+      "created": "2026-08-17T18:00:00Z",
+      "modified": "2026-08-17T18:00:00Z",
+      "name": "Demo malicious domain",
+      "pattern_type": "stix",
+      "pattern": "[domain-name:value = 'payload.example']",
+      "valid_from": "2026-08-17T18:00:00Z",
+      "confidence": 65,
+      "labels": ["malicious-activity"]
+    }
+  ]
+}
