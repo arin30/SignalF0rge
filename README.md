@@ -8,10 +8,11 @@ I started the project because I wanted something more realistic than isolated se
 
 Right now SignalF0rge can:
 
-* normalize JSONL security events
+* normalize its native JSONL security event format
+* ingest Windows Security and Sysmon style JSONL telemetry
 * run configurable YAML detection rules
 * correlate threshold, sequence, distinct-count, and multi-step activity
-* correlate activity across authentication, endpoint, and network sources when events share a correlation identifier
+* correlate authentication, endpoint, and network events by shared user identity
 * assign severity scores to findings
 * attach MITRE ATT&CK technique IDs to detections
 * generate JSON findings and an HTML investigation report
@@ -50,7 +51,7 @@ Endpoint coverage includes suspicious and encoded PowerShell, local administrato
 
 Network coverage includes higher risk destination ports, repeated denied firewall traffic, rapid scanning across destination ports, and rapid connections across many destination hosts.
 
-Behavioral correlation can detect ordered multi-step activity such as PowerShell execution followed by credential access on the same host. Cross-source correlation can combine authentication, endpoint, and network telemetry into one higher-confidence incident when those events share a common correlation identifier.
+Behavioral correlation can detect ordered multi-step activity such as PowerShell execution followed by credential access on the same host. Cross-source correlation can combine authentication, endpoint, and network telemetry into one higher-confidence incident when the events share the same user identity and occur within the configured time window.
 
 Detection logic is defined in `rules.yml`, so thresholds, matching criteria, severity, and ATT&CK mappings can be changed without editing the engine itself.
 
@@ -69,12 +70,24 @@ signalf0rge analyze samples/phase1_events.jsonl --rules rules.yml --out output-p
 open output-phase1/report.html
 ```
 
-The advanced sample mixes benign activity with password spraying, scanning, multi-step endpoint behavior, and a correlated authentication-to-endpoint-to-network incident:
+The advanced normalized sample mixes benign activity with password spraying, scanning, multi-step endpoint behavior, and a correlated authentication-to-endpoint-to-network incident:
 
 ```bash
 signalf0rge analyze samples/advanced_events.jsonl --rules rules.yml --out output-advanced
 open output-advanced/report.html
 ```
+
+The Windows/Sysmon sample uses field names and event IDs modeled after Windows Security audit and Sysmon telemetry. Use `--format windows` to normalize those records before detection:
+
+```bash
+signalf0rge analyze samples/windows_sysmon_events.jsonl \
+  --format windows \
+  --rules rules.yml \
+  --out output-windows
+open output-windows/report.html
+```
+
+The adapter currently recognizes Windows Security event IDs 4624 and 4625 plus Sysmon event IDs 1, 3, and 10. It maps those records into SignalF0rge's common event model so the same detection engine and rule library can be reused across input formats.
 
 ## Detection primitives
 
@@ -115,9 +128,9 @@ I kept this part offline for now so it is easy to test and does not require API 
 ## Project layout
 
 ```text
-signalf0rge/       core Python package
-samples/           sample telemetry and detection data
-tests/             unit tests
+signalf0rge/       core Python package and telemetry adapters
+samples/           normalized and Windows/Sysmon style sample telemetry
+tests/             unit and integration tests
 rules.yml          native detection rules
 Dockerfile         container build
 .github/workflows  CI configuration
@@ -141,8 +154,8 @@ If you find a bug or have an idea for another detection or log source, feel free
 
 A few things I want to work on next:
 
-* adapters for realistic telemetry such as Windows event and Sysmon style records
-* stronger entity linking so cross-source correlation does not require a preassigned correlation identifier
+* additional Windows Security and Sysmon event types
+* stronger entity linking that can combine user, host, session, and IP relationships when a single shared identity is unavailable
 * larger mixed datasets with more benign background noise and multiple attack scenarios
 * broader Sigma translation
 * TAXII 2.1 collection retrieval and local caching
