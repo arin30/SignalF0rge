@@ -41,9 +41,24 @@ The analysis command writes `findings.json` and `report.html` to the output dire
 
 ## Detections
 
-The native rules currently cover repeated failed logins, a successful login after repeated failures, suspicious PowerShell commands, encoded PowerShell execution, local administrator creation, credential dumping indicators, connections to higher risk destination ports, and repeated denied firewall traffic.
+The native rule library currently contains 19 detections across authentication, endpoint, and network telemetry.
 
-Detection logic is defined in `rules.yml`, so thresholds and matching criteria can be changed without editing the engine itself.
+Authentication coverage includes repeated failed logins by source IP, successful authentication after repeated failures, and repeated failures targeting one account even when the attempts come from different sources.
+
+Endpoint coverage includes suspicious and encoded PowerShell, local administrator creation, credential dumping indicators, scheduled task creation, Windows service creation, Registry Run Key persistence, endpoint security disabling, WMI execution, certutil based remote file retrieval, Office applications spawning command shells, shadow copy deletion, Windows event log clearing, and host firewall disabling.
+
+Network coverage includes higher risk destination ports and repeated denied firewall traffic.
+
+Detection logic is defined in `rules.yml`, so thresholds, matching criteria, severity, and ATT&CK mappings can be changed without editing the engine itself.
+
+A second synthetic sample exercises the expanded Phase 1 rules:
+
+```bash
+signalf0rge analyze samples/phase1_events.jsonl --rules rules.yml --out output-phase1
+open output-phase1/report.html
+```
+
+The original `samples/events.jsonl` remains intentionally small so the basic correlation flow is easy to understand.
 
 ## Sigma
 
@@ -87,7 +102,7 @@ At a high level, events go through parsing and normalization before reaching the
 ```bash
 pip install -e .
 pip install pytest
-pytest -q
+python -m pytest -q
 ```
 
 Tests also run through GitHub Actions on pushes and pull requests.
@@ -98,10 +113,11 @@ If you find a bug or have an idea for another detection or log source, feel free
 
 A few things I want to work on next:
 
-* TAXII 2.1 collection retrieval and local caching
+* richer detection primitives such as distinct counts and multi-step sequences
+* cross-source correlation across authentication, endpoint, and network events
+* larger mixed synthetic datasets with both benign and suspicious activity
+* ingestion of more realistic security telemetry formats
 * broader Sigma translation
+* TAXII 2.1 collection retrieval and local caching
 * file hash and additional observable support
 * persistent storage for findings
-* Kubernetes audit log ingestion
-* OpenTelemetry ingestion
-* OPA based policy checks
