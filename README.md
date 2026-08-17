@@ -41,7 +41,7 @@ The analysis command writes `findings.json` and `report.html` to the output dire
 
 ## Detections
 
-The native rule library currently contains 18 detections across authentication, endpoint, and network telemetry.
+The native rule library currently contains 19 detections across authentication, endpoint, and network telemetry.
 
 Authentication coverage includes repeated failed logins by source IP, successful authentication after repeated failures, and repeated failures targeting one account even when the attempts come from different sources.
 
