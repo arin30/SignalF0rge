@@ -10,7 +10,8 @@ Right now SignalF0rge can:
 
 * normalize JSONL security events
 * run configurable YAML detection rules
-* correlate repeated or sequential activity
+* correlate threshold, sequence, distinct-count, and multi-step activity
+* correlate activity across authentication, endpoint, and network sources when events share a correlation identifier
 * assign severity scores to findings
 * attach MITRE ATT&CK technique IDs to detections
 * generate JSON findings and an HTML investigation report
@@ -41,24 +42,51 @@ The analysis command writes `findings.json` and `report.html` to the output dire
 
 ## Detections
 
-The native rule library currently contains 19 detections across authentication, endpoint, and network telemetry.
+The native rule library currently contains 24 detections across authentication, endpoint, network, behavioral, and cross-source incident analysis.
 
-Authentication coverage includes repeated failed logins by source IP, successful authentication after repeated failures, and repeated failures targeting one account even when the attempts come from different sources.
+Authentication coverage includes repeated failed logins by source IP, successful authentication after repeated failures, repeated failures targeting one account, and password spraying across multiple distinct accounts.
 
 Endpoint coverage includes suspicious and encoded PowerShell, local administrator creation, credential dumping indicators, scheduled task creation, Windows service creation, Registry Run Key persistence, endpoint security disabling, WMI execution, certutil based remote file retrieval, Office applications spawning command shells, shadow copy deletion, Windows event log clearing, and host firewall disabling.
 
-Network coverage includes higher risk destination ports and repeated denied firewall traffic.
+Network coverage includes higher risk destination ports, repeated denied firewall traffic, rapid scanning across destination ports, and rapid connections across many destination hosts.
+
+Behavioral correlation can detect ordered multi-step activity such as PowerShell execution followed by credential access on the same host. Cross-source correlation can combine authentication, endpoint, and network telemetry into one higher-confidence incident when those events share a common correlation identifier.
 
 Detection logic is defined in `rules.yml`, so thresholds, matching criteria, severity, and ATT&CK mappings can be changed without editing the engine itself.
 
-A second synthetic sample exercises the expanded Phase 1 rules:
+## Sample telemetry
+
+The original sample remains intentionally small so the basic correlation flow is easy to understand:
+
+```bash
+signalf0rge analyze samples/events.jsonl --rules rules.yml --out output
+```
+
+The Phase 1 sample exercises the expanded native rule library:
 
 ```bash
 signalf0rge analyze samples/phase1_events.jsonl --rules rules.yml --out output-phase1
 open output-phase1/report.html
 ```
 
-The original `samples/events.jsonl` remains intentionally small so the basic correlation flow is easy to understand.
+The advanced sample mixes benign activity with password spraying, scanning, multi-step endpoint behavior, and a correlated authentication-to-endpoint-to-network incident:
+
+```bash
+signalf0rge analyze samples/advanced_events.jsonl --rules rules.yml --out output-advanced
+open output-advanced/report.html
+```
+
+## Detection primitives
+
+SignalF0rge currently supports these native rule types:
+
+* `contains` for suspicious strings in fields such as commands and messages
+* `network_port` for destination-port based detections
+* `threshold` for repeated events within a time window
+* `distinct_count` for behavior involving many unique users, ports, hosts, or other values
+* `sequence` for a repeated first event followed by a second event
+* `multi_sequence` for arbitrary ordered steps within one correlated entity
+* `cross_source_sequence` for ordered steps spanning multiple telemetry source types
 
 ## Sigma
 
@@ -82,7 +110,7 @@ signalf0rge intel samples/events.jsonl \
 
 The current matcher handles exact IPv4, IPv6, domain, and URL indicators. It intentionally skips STIX patterns it does not understand instead of trying to guess at their meaning.
 
-I kept this part offline for now so it is easy to test and does not require API keys. TAXII retrieval is the next step for pulling indicator collections from external sources.
+I kept this part offline for now so it is easy to test and does not require API keys. TAXII retrieval is a future step for pulling indicator collections from external sources.
 
 ## Project layout
 
@@ -113,10 +141,9 @@ If you find a bug or have an idea for another detection or log source, feel free
 
 A few things I want to work on next:
 
-* richer detection primitives such as distinct counts and multi-step sequences
-* cross-source correlation across authentication, endpoint, and network events
-* larger mixed synthetic datasets with both benign and suspicious activity
-* ingestion of more realistic security telemetry formats
+* adapters for realistic telemetry such as Windows event and Sysmon style records
+* stronger entity linking so cross-source correlation does not require a preassigned correlation identifier
+* larger mixed datasets with more benign background noise and multiple attack scenarios
 * broader Sigma translation
 * TAXII 2.1 collection retrieval and local caching
 * file hash and additional observable support
