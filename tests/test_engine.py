@@ -131,6 +131,6 @@ def test_advanced_samples_cover_phase2_and_phase3():
     assert expected <= detected
 
     incident = next(finding for finding in findings if finding.rule_id == "INCIDENT-001")
-    assert incident.entity == "correlation_id:case-001"
+    assert incident.entity == "user:alex"
     assert incident.evidence_count == 4
     assert incident.score == 100
