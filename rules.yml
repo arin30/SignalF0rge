@@ -259,9 +259,9 @@ rules:
 
   - id: INCIDENT-001
     title: Multi-stage account compromise behavior
-    description: A successful authentication is followed by encoded PowerShell, credential access, and an outbound high-risk connection within one correlated activity chain.
+    description: A successful authentication is followed by encoded PowerShell, credential access, and an outbound high-risk connection for the same user within one activity chain.
     kind: cross_source_sequence
-    group_by: correlation_id
+    group_by: user
     window_minutes: 20
     steps:
       - source_type: auth
