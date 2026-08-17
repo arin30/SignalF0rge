@@ -1,7 +1,9 @@
 from datetime import datetime, timezone, timedelta
+from pathlib import Path
 from signalf0rge.models import Event
-from signalf0rge.rules import Rule
+from signalf0rge.rules import Rule, load_rules
 from signalf0rge.engine import analyze
+from signalf0rge.parser import load_jsonl
 
 
 def test_threshold_rule():
@@ -61,3 +63,28 @@ def test_success_after_failures_sequence():
     findings = analyze(events, [rule])
     assert len(findings) == 1
     assert findings[0].evidence_count == 6
+
+
+def test_phase1_detection_samples_cover_new_rules():
+    root = Path(__file__).resolve().parents[1]
+    events = load_jsonl(root / "samples" / "phase1_events.jsonl")
+    rules = load_rules(root / "rules.yml")
+    findings = analyze(events, rules)
+    detected = {finding.rule_id for finding in findings}
+
+    expected = {
+        "AUTH-003",
+        "ENDPOINT-005",
+        "ENDPOINT-006",
+        "ENDPOINT-007",
+        "ENDPOINT-008",
+        "ENDPOINT-009",
+        "ENDPOINT-010",
+        "ENDPOINT-011",
+        "ENDPOINT-012",
+        "ENDPOINT-013",
+        "ENDPOINT-014",
+    }
+
+    assert expected <= detected
+    assert "AUTH-001" not in detected
