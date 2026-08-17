@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "signalf0rge"
+version = "0.1.0"
+description = "Security event triage, detection, correlation, and reporting pipeline."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["PyYAML>=6.0"]
+
+[project.scripts]
+signalf0rge = "signalf0rge.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["signalf0rge*"]
