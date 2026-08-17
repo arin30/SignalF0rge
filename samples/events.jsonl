@@ -1,0 +1,9 @@
+{"timestamp":"2026-08-17T16:00:00Z","source_type":"auth","host":"vpn-01","user":"alex","src_ip":"198.51.100.23","action":"login_failed","message":"Invalid password"}
+{"timestamp":"2026-08-17T16:01:00Z","source_type":"auth","host":"vpn-01","user":"alex","src_ip":"198.51.100.23","action":"login_failed","message":"Invalid password"}
+{"timestamp":"2026-08-17T16:02:00Z","source_type":"auth","host":"vpn-01","user":"alex","src_ip":"198.51.100.23","action":"login_failed","message":"Invalid password"}
+{"timestamp":"2026-08-17T16:03:00Z","source_type":"auth","host":"vpn-01","user":"alex","src_ip":"198.51.100.23","action":"login_failed","message":"Invalid password"}
+{"timestamp":"2026-08-17T16:04:00Z","source_type":"auth","host":"vpn-01","user":"alex","src_ip":"198.51.100.23","action":"login_failed","message":"Invalid password"}
+{"timestamp":"2026-08-17T16:05:00Z","source_type":"auth","host":"vpn-01","user":"alex","src_ip":"198.51.100.23","action":"login_success","message":"Authentication successful"}
+{"timestamp":"2026-08-17T16:10:00Z","source_type":"endpoint","host":"ws-22","user":"alex","action":"process_start","command":"powershell.exe -enc SQBFAFgA","message":"Process created"}
+{"timestamp":"2026-08-17T16:12:00Z","source_type":"endpoint","host":"ws-22","user":"alex","action":"process_start","command":"powershell.exe","message":"Suspicious access to LSASS detected"}
+{"timestamp":"2026-08-17T16:15:00Z","source_type":"network","host":"ws-22","src_ip":"10.0.1.22","dst_ip":"8.8.8.8","dst_port":4444,"action":"allowed","message":"Outbound connection"}
