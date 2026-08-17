@@ -1,12 +1,23 @@
 # SignalF0rge
 
-SignalF0rge is an open source blue team security automation project for ingesting raw telemetry, normalizing events, detecting suspicious behavior, correlating evidence, mapping findings to MITRE ATT&CK, enriching observables with threat intelligence, and generating analyst friendly incident reports.
+SignalF0rge is a security automation project I built to experiment with detection engineering and incident triage workflows. It takes authentication, endpoint, and network events, normalizes them into a common format, runs configurable detections, correlates related activity, and produces findings that are easier to investigate.
 
-The project is designed as a small but extensible detection engineering pipeline rather than a collection of disconnected scripts.
+I started the project because I wanted something more realistic than isolated security scripts. The goal is to keep the code small enough to understand end to end while still leaving room to add new log sources, detections, and threat intelligence later.
 
-## Capabilities
+## What it does
 
-SignalF0rge currently demonstrates security event normalization, configurable detection rules, event correlation, severity scoring, MITRE ATT&CK mapping, incident triage, JSON and HTML reporting, Sigma rule inspection, STIX 2.x indicator matching, Python packaging, Docker, automated testing, and GitHub Actions CI.
+Right now SignalF0rge can:
+
+* normalize JSONL security events
+* run configurable YAML detection rules
+* correlate repeated or sequential activity
+* assign severity scores to findings
+* attach MITRE ATT&CK technique IDs to detections
+* generate JSON findings and an HTML investigation report
+* inspect basic metadata from Sigma rules
+* compare event observables with exact value STIX 2.x indicators
+
+The repository also includes tests, a Dockerfile, and a GitHub Actions workflow.
 
 ## Quick start
 
@@ -17,21 +28,36 @@ pip install -e .
 signalf0rge analyze samples/events.jsonl --rules rules.yml --out output
 ```
 
-The analysis command writes structured findings and an analyst friendly HTML report to the output directory.
+On Windows PowerShell:
 
-## Sigma support
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -e .
+signalf0rge analyze samples/events.jsonl --rules rules.yml --out output
+```
 
-SignalF0rge can ingest Sigma YAML metadata so detections from the broader open source ecosystem can be inspected alongside the native rule pipeline.
+The analysis command writes `findings.json` and `report.html` to the output directory.
+
+## Detections
+
+The native rules currently cover repeated failed logins, a successful login after repeated failures, suspicious PowerShell commands, encoded PowerShell execution, local administrator creation, credential dumping indicators, connections to higher risk destination ports, and repeated denied firewall traffic.
+
+Detection logic is defined in `rules.yml`, so thresholds and matching criteria can be changed without editing the engine itself.
+
+## Sigma
+
+I added a small Sigma importer to inspect detection metadata and ATT&CK tags from Sigma YAML files.
 
 ```bash
 signalf0rge sigma samples/sigma_suspicious_powershell.yml
 ```
 
-The importer validates required Sigma fields and surfaces the detection title, severity, log source, and MITRE ATT&CK tags. Full Sigma condition translation is intentionally listed as future work rather than claiming compatibility that is not yet implemented.
+This is not a full Sigma implementation. It currently validates the basic rule structure and exposes useful metadata. More complete condition translation is something I want to add later.
 
-## STIX threat intelligence enrichment
+## STIX enrichment
 
-SignalF0rge can load STIX 2.x bundles and compare event observables against exact value indicators for IPv4, IPv6, domains, and URLs.
+SignalF0rge can also compare observables in events against indicators from a local STIX 2.x bundle.
 
 ```bash
 signalf0rge intel samples/events.jsonl \
@@ -39,42 +65,22 @@ signalf0rge intel samples/events.jsonl \
   --out output/intel_matches.json
 ```
 
-Each enrichment result records the matching event index and field together with indicator metadata such as the STIX ID, name, labels, confidence, validity date, and description. Unsupported complex STIX patterns are skipped instead of being interpreted incorrectly.
+The current matcher handles exact IPv4, IPv6, domain, and URL indicators. It intentionally skips STIX patterns it does not understand instead of trying to guess at their meaning.
 
-This provides an offline threat intelligence workflow that is reproducible in CI and does not require analysts to embed third party API credentials in the project.
+I kept this part offline for now so it is easy to test and does not require API keys. TAXII retrieval is the next step for pulling indicator collections from external sources.
 
-## Current detections
-
-Current native detections cover repeated failed authentication, successful login following repeated failures, suspicious and encoded PowerShell execution, local administrator creation, credential dumping indicators, risky destination ports, and repeated denied firewall traffic.
-
-## Architecture
+## Project layout
 
 ```text
-raw JSONL telemetry
-        |
-        +------------------------------+
-        |                              |
-        v                              v
-parser and normalizer          STIX indicator matching
-        |                              |
-        v                              v
-configurable rule engine       enriched IOC matches
-        |
-        v
-correlation and severity scoring
-        |
-        v
-MITRE ATT&CK enriched findings
-        |
-        +--> findings.json
-        +--> report.html
-
-Sigma YAML --> metadata importer --> ATT&CK and log source context
+signalf0rge/       core Python package
+samples/           sample telemetry and detection data
+tests/             unit tests
+rules.yml          native detection rules
+Dockerfile         container build
+.github/workflows  CI configuration
 ```
 
-## Why this project exists
-
-Security teams routinely receive telemetry from different sources and need to turn isolated events into prioritized evidence. SignalF0rge explores that workflow in a transparent codebase that can be extended with additional log sources, detection formats, enrichment providers, and policy engines.
+At a high level, events go through parsing and normalization before reaching the rule engine. Findings are correlated and scored, then written to JSON and HTML. STIX enrichment runs alongside that flow and records IOC matches against the same event data.
 
 ## Development
 
@@ -84,14 +90,18 @@ pip install pytest
 pytest -q
 ```
 
-CI runs the test suite automatically on pushes and pull requests.
+Tests also run through GitHub Actions on pushes and pull requests.
 
-Contributions are welcome. See `CONTRIBUTING.md` for the development workflow.
+If you find a bug or have an idea for another detection or log source, feel free to open an issue. Small pull requests are welcome too.
 
-## Roadmap
+## Next steps
 
-Planned work includes fuller Sigma translation, TAXII collection retrieval, a persistent finding store, OpenTelemetry ingestion, Kubernetes audit log support, OPA policy evaluation, additional observable types such as file hashes, and additional CI security checks.
+A few things I want to work on next:
 
-## Resume ready bullet
-
-Built SignalF0rge, an open source Python security automation pipeline that normalizes endpoint, authentication, and network telemetry, detects and correlates suspicious activity, maps findings to MITRE ATT&CK, imports Sigma detection metadata, enriches event observables against STIX threat intelligence, and generates prioritized incident reports with automated tests and CI.
+* TAXII 2.1 collection retrieval and local caching
+* broader Sigma translation
+* file hash and additional observable support
+* persistent storage for findings
+* Kubernetes audit log ingestion
+* OpenTelemetry ingestion
+* OPA based policy checks
