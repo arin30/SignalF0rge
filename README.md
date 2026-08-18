@@ -1,25 +1,27 @@
 # SignalF0rge
 
-SignalF0rge is a security automation project I built to experiment with detection engineering and incident triage workflows. It takes authentication, endpoint, and network events, normalizes them into a common format, runs configurable detections, correlates related activity, and produces findings that are easier to investigate.
+SignalF0rge is a detection engineering project I started to get more hands-on with the part of security work between raw logs and an actual incident finding.
 
-I started the project because I wanted something more realistic than isolated security scripts. The goal is to keep the code small enough to understand end to end while still leaving room to add new log sources, detections, and threat intelligence later.
+It reads authentication, endpoint, and network events, normalizes them, runs YAML detection rules, and correlates related activity over time. The output is a JSON findings file plus a small HTML report that makes the detections easier to review.
 
-## What it does
+I originally built a few straightforward detections, then kept extending the project as I ran into cases that needed more context than one log line could provide. That led to sequence rules, distinct counts, cross-source correlation, Windows/Sysmon normalization, and some basic threat-intelligence enrichment.
 
-Right now SignalF0rge can:
+## Current capabilities
 
-* normalize its native JSONL security event format
-* ingest Windows Security and Sysmon style JSONL telemetry
-* run configurable YAML detection rules
-* correlate threshold, sequence, distinct-count, and multi-step activity
-* correlate authentication, endpoint, and network events by shared user identity
-* assign severity scores to findings
-* attach MITRE ATT&CK technique IDs to detections
-* generate JSON findings and an HTML investigation report
-* inspect basic metadata from Sigma rules
-* compare event observables with exact value STIX 2.x indicators
+- native JSONL event input
+- Windows Security and Sysmon-style JSONL normalization
+- YAML detection rules
+- threshold and distinct-count detections
+- ordered sequences and multi-step correlation
+- cross-source correlation between authentication, endpoint, and network events
+- severity scoring
+- MITRE ATT&CK mappings
+- JSON findings and an HTML report
+- basic Sigma metadata inspection
+- exact-match STIX 2.x indicator enrichment
+- pytest coverage, Docker support, and GitHub Actions CI
 
-The repository also includes tests, a Dockerfile, and a GitHub Actions workflow.
+There are currently 24 native detections covering authentication, endpoint, network, behavioral, and cross-source activity.
 
 ## Quick start
 
@@ -30,7 +32,7 @@ pip install -e .
 signalf0rge analyze samples/events.jsonl --rules rules.yml --out output
 ```
 
-On Windows PowerShell:
+Windows PowerShell:
 
 ```powershell
 python -m venv .venv
@@ -39,45 +41,44 @@ pip install -e .
 signalf0rge analyze samples/events.jsonl --rules rules.yml --out output
 ```
 
-The analysis command writes `findings.json` and `report.html` to the output directory.
+The output directory will contain `findings.json` and `report.html`.
 
-## Detections
+## Detection rules
 
-The native rule library currently contains 24 detections across authentication, endpoint, network, behavioral, and cross-source incident analysis.
+The rules live in `rules.yml`, which lets me change thresholds, matching fields, severity, time windows, and ATT&CK mappings without changing the engine code.
 
-Authentication coverage includes repeated failed logins by source IP, successful authentication after repeated failures, repeated failures targeting one account, and password spraying across multiple distinct accounts.
+The current rule types are:
 
-Endpoint coverage includes suspicious and encoded PowerShell, local administrator creation, credential dumping indicators, scheduled task creation, Windows service creation, Registry Run Key persistence, endpoint security disabling, WMI execution, certutil based remote file retrieval, Office applications spawning command shells, shadow copy deletion, Windows event log clearing, and host firewall disabling.
+- `contains` - match suspicious text in fields such as commands or messages
+- `network_port` - flag selected destination ports
+- `threshold` - count repeated events inside a time window
+- `distinct_count` - count unique users, hosts, ports, or other values
+- `sequence` - detect one event followed by another
+- `multi_sequence` - detect an arbitrary ordered chain for the same entity
+- `cross_source_sequence` - correlate ordered activity across telemetry sources
 
-Network coverage includes higher risk destination ports, repeated denied firewall traffic, rapid scanning across destination ports, and rapid connections across many destination hosts.
+Some of the included rules cover password spraying, repeated login failures followed by success, suspicious/encoded PowerShell, credential access, scheduled tasks, service creation, Run Key persistence, WMI, certutil downloads, Office spawning a shell, event-log clearing, firewall disabling, port scanning, and repeated denied traffic.
 
-Behavioral correlation can detect ordered multi-step activity such as PowerShell execution followed by credential access on the same host. Cross-source correlation can combine authentication, endpoint, and network telemetry into one higher-confidence incident when the events share the same user identity and occur within the configured time window.
+The correlation rules are the part I have spent the most time on. For example, SignalF0rge can combine a successful authentication, suspicious endpoint activity, credential access, and an outbound network event into one finding when the events share a user and happen close enough together.
 
-Detection logic is defined in `rules.yml`, so thresholds, matching criteria, severity, and ATT&CK mappings can be changed without editing the engine itself.
+## Samples
 
-## Sample telemetry
-
-The original sample remains intentionally small so the basic correlation flow is easy to understand:
+Small sample:
 
 ```bash
 signalf0rge analyze samples/events.jsonl --rules rules.yml --out output
 ```
 
-The Phase 1 sample exercises the expanded native rule library:
+Larger normalized sample:
 
 ```bash
-signalf0rge analyze samples/phase1_events.jsonl --rules rules.yml --out output-phase1
-open output-phase1/report.html
-```
-
-The advanced normalized sample mixes benign activity with password spraying, scanning, multi-step endpoint behavior, and a correlated authentication-to-endpoint-to-network incident:
-
-```bash
-signalf0rge analyze samples/advanced_events.jsonl --rules rules.yml --out output-advanced
+signalf0rge analyze samples/advanced_events.jsonl \
+  --rules rules.yml \
+  --out output-advanced
 open output-advanced/report.html
 ```
 
-The Windows/Sysmon sample uses field names and event IDs modeled after Windows Security audit and Sysmon telemetry. Use `--format windows` to normalize those records before detection:
+Windows/Sysmon-style sample:
 
 ```bash
 signalf0rge analyze samples/windows_sysmon_events.jsonl \
@@ -87,33 +88,21 @@ signalf0rge analyze samples/windows_sysmon_events.jsonl \
 open output-windows/report.html
 ```
 
-The adapter currently recognizes Windows Security event IDs 4624 and 4625 plus Sysmon event IDs 1, 3, and 10. It maps those records into SignalF0rge's common event model so the same detection engine and rule library can be reused across input formats.
-
-## Detection primitives
-
-SignalF0rge currently supports these native rule types:
-
-* `contains` for suspicious strings in fields such as commands and messages
-* `network_port` for destination-port based detections
-* `threshold` for repeated events within a time window
-* `distinct_count` for behavior involving many unique users, ports, hosts, or other values
-* `sequence` for a repeated first event followed by a second event
-* `multi_sequence` for arbitrary ordered steps within one correlated entity
-* `cross_source_sequence` for ordered steps spanning multiple telemetry source types
+The Windows adapter currently handles Security event IDs 4624 and 4625 and Sysmon event IDs 1, 3, and 10. Those records are mapped into the same internal event model used by the native samples, so the detection engine does not need separate rules for each input format.
 
 ## Sigma
 
-I added a small Sigma importer to inspect detection metadata and ATT&CK tags from Sigma YAML files.
+There is a small Sigma importer for looking at rule metadata and ATT&CK tags:
 
 ```bash
 signalf0rge sigma samples/sigma_suspicious_powershell.yml
 ```
 
-This is not a full Sigma implementation. It currently validates the basic rule structure and exposes useful metadata. More complete condition translation is something I want to add later.
+It is deliberately limited right now. It validates the basic structure and exposes metadata, but it does not pretend to be a full Sigma condition translator.
 
-## STIX enrichment
+## STIX indicators
 
-SignalF0rge can also compare observables in events against indicators from a local STIX 2.x bundle.
+SignalF0rge can compare event observables with indicators from a local STIX 2.x bundle:
 
 ```bash
 signalf0rge intel samples/events.jsonl \
@@ -121,24 +110,9 @@ signalf0rge intel samples/events.jsonl \
   --out output/intel_matches.json
 ```
 
-The current matcher handles exact IPv4, IPv6, domain, and URL indicators. It intentionally skips STIX patterns it does not understand instead of trying to guess at their meaning.
+The matcher currently supports exact IPv4, IPv6, domain, and URL values. Unsupported STIX patterns are skipped rather than guessed at. I kept the first version offline so it can be tested without API keys or an external service.
 
-I kept this part offline for now so it is easy to test and does not require API keys. TAXII retrieval is a future step for pulling indicator collections from external sources.
-
-## Project layout
-
-```text
-signalf0rge/       core Python package and telemetry adapters
-samples/           normalized and Windows/Sysmon style sample telemetry
-tests/             unit and integration tests
-rules.yml          native detection rules
-Dockerfile         container build
-.github/workflows  CI configuration
-```
-
-At a high level, events go through parsing and normalization before reaching the rule engine. Findings are correlated and scored, then written to JSON and HTML. STIX enrichment runs alongside that flow and records IOC matches against the same event data.
-
-## Development
+## Tests
 
 ```bash
 pip install -e .
@@ -146,18 +120,29 @@ pip install pytest
 python -m pytest -q
 ```
 
-Tests also run through GitHub Actions on pushes and pull requests.
+The same tests run in GitHub Actions on pushes and pull requests.
 
-If you find a bug or have an idea for another detection or log source, feel free to open an issue. Small pull requests are welcome too.
+## Layout
 
-## Next steps
+```text
+signalf0rge/       detection engine, correlation, reporting, telemetry adapters
+samples/           native and Windows/Sysmon-style sample data
+ tests/            unit and integration tests
+rules.yml          native detection rules
+Dockerfile         container build
+.github/workflows  CI configuration
+```
 
-A few things I want to work on next:
+At a high level the flow is:
 
-* additional Windows Security and Sysmon event types
-* stronger entity linking that can combine user, host, session, and IP relationships when a single shared identity is unavailable
-* larger mixed datasets with more benign background noise and multiple attack scenarios
-* broader Sigma translation
-* TAXII 2.1 collection retrieval and local caching
-* file hash and additional observable support
-* persistent storage for findings
+```text
+raw events -> normalize -> detect -> correlate -> score -> JSON / HTML
+                                  \
+                                   -> STIX indicator matches
+```
+
+## What I want to add next
+
+The biggest thing I want to improve is entity linking. Right now user identity is useful for tying several sources together, but real investigations often need to connect users, hosts, IPs, and sessions even when there is no single shared field.
+
+I also want to add more Windows/Sysmon event types, broader Sigma translation, TAXII retrieval, file-hash indicators, and larger datasets with more normal background activity mixed in with the attack scenarios.
