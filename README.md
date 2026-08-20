@@ -127,7 +127,7 @@ The same tests run in GitHub Actions on pushes and pull requests.
 ```text
 signalf0rge/       detection engine, correlation, reporting, telemetry adapters
 samples/           native and Windows/Sysmon-style sample data
- tests/            unit and integration tests
+tests/             unit and integration tests
 rules.yml          native detection rules
 Dockerfile         container build
 .github/workflows  CI configuration
