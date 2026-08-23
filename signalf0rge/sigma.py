@@ -23,7 +23,7 @@ def load_sigma_rule(path: str | Path) -> dict:
         "id": data.get("id"),
         "status": data.get("status"),
         "description": data.get("description"),
-        "logsource": data.get("logsource", {}),
+        "logsource": data.get("logsource") or {},
         "detection": data["detection"],
         "level": data.get("level", "medium"),
         "attack_tags": attack,
