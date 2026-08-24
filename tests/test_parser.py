@@ -25,3 +25,19 @@ def test_load_jsonl_ignores_blank_lines_and_sorts_by_timestamp():
         events = load_jsonl(p)
         assert [event.source_type for event in events] == ["auth", "endpoint"]
         assert events[0].timestamp <= events[1].timestamp
+
+
+def test_load_jsonl_reports_malformed_line_number():
+    with tempfile.TemporaryDirectory() as d:
+        p = Path(d) / "events.jsonl"
+        p.write_text(
+            '{"timestamp":"2026-08-17T10:00:00Z","source_type":"auth"}\n'
+            '{not-json}\n',
+            encoding="utf-8",
+        )
+        try:
+            load_jsonl(p)
+        except ValueError as exc:
+            assert f"{p}:2:" in str(exc)
+        else:
+            raise AssertionError("malformed JSONL should raise ValueError")
