@@ -98,6 +98,7 @@ def load_windows_jsonl(path: str | Path) -> list[Event]:
 
 
 def load_events(path: str | Path, format_name: str = "normalized") -> list[Event]:
+    format_name = format_name.strip().lower()
     if format_name == "normalized":
         from .parser import load_jsonl
         return load_jsonl(path)
