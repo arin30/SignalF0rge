@@ -34,3 +34,13 @@ def test_large_mixed_dataset_evaluation(tmp_path):
     assert metrics["recall"] >= 0.95
     assert metrics["precision"] >= 0.95
     assert metrics["f1"] >= 0.95
+
+
+def test_empty_evaluation_returns_zero_metrics():
+    metrics = evaluate_findings([], {})
+
+    assert metrics["expected_cases"] == 0
+    assert metrics["predicted_cases"] == 0
+    assert metrics["precision"] == 0.0
+    assert metrics["recall"] == 0.0
+    assert metrics["f1"] == 0.0
