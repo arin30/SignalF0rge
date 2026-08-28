@@ -62,7 +62,7 @@ def load_stix_bundle(path: str | Path) -> list[Indicator]:
     domains, and URLs. Unsupported STIX patterns are skipped rather than guessed.
     """
     data = json.loads(Path(path).read_text(encoding="utf-8"))
-    if data.get("type") != "bundle" or not isinstance(data.get("objects"), list):
+    if not isinstance(data, dict) or data.get("type") != "bundle" or not isinstance(data.get("objects"), list):
         raise ValueError("Expected a STIX bundle with an objects list")
 
     indicators = []
