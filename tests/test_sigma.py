@@ -34,3 +34,14 @@ def test_sigma_requires_detection(tmp_path):
         assert "title and detection" in str(exc)
     else:
         raise AssertionError("Expected invalid Sigma rule to raise ValueError")
+
+
+def test_sigma_rejects_non_mapping_yaml(tmp_path):
+    rule = tmp_path / "list.yml"
+    rule.write_text("- title: Not a mapping\n", encoding="utf-8")
+    try:
+        load_sigma_rule(rule)
+    except ValueError as exc:
+        assert "YAML mapping" in str(exc)
+    else:
+        raise AssertionError("Expected non-mapping Sigma YAML to raise ValueError")
