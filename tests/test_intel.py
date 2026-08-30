@@ -37,6 +37,37 @@ def test_stix_ip_indicator_matches_event(tmp_path):
     assert matches[0].indicator.confidence == 90
 
 
+def test_stix_ip_indicator_matches_source_ip(tmp_path):
+    bundle = {
+        "type": "bundle",
+        "id": "bundle--source-ip",
+        "objects": [
+            {
+                "type": "indicator",
+                "id": "indicator--source-ip",
+                "name": "Known scanner",
+                "pattern_type": "stix",
+                "pattern": "[ipv4-addr:value = '198.51.100.77']",
+                "confidence": 80,
+                "labels": ["scanner"],
+            }
+        ],
+    }
+    path = tmp_path / "source-ip-bundle.json"
+    path.write_text(json.dumps(bundle), encoding="utf-8")
+    event = Event(
+        timestamp=datetime(2026, 8, 17, tzinfo=timezone.utc),
+        source_type="network",
+        src_ip="198.51.100.77",
+        dst_ip="10.0.0.10",
+        raw={"source_type": "network", "src_ip": "198.51.100.77"},
+    )
+    matches = enrich_events([event], load_stix_bundle(path))
+    assert len(matches) == 1
+    assert matches[0].field == "src_ip"
+    assert matches[0].indicator.confidence == 80
+
+
 def test_unsupported_stix_pattern_is_skipped(tmp_path):
     bundle = {
         "type": "bundle",
