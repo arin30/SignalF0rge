@@ -48,6 +48,45 @@ def test_threshold_rule():
     assert findings[0].entity == "src_ip:203.0.113.10"
 
 
+def test_threshold_rule_expires_events_outside_window():
+    start = datetime(2026, 8, 17, 10, 0, tzinfo=timezone.utc)
+    events = []
+    for minutes in (0, 1, 2, 3, 14):
+        timestamp = start + timedelta(minutes=minutes)
+        events.append(
+            Event(
+                timestamp=timestamp,
+                source_type="auth",
+                src_ip="203.0.113.11",
+                action="login_failed",
+                raw={
+                    "timestamp": timestamp.isoformat(),
+                    "source_type": "auth",
+                    "src_ip": "203.0.113.11",
+                    "action": "login_failed",
+                },
+            )
+        )
+
+    rule = Rule(
+        {
+            "id": "AUTH-WINDOW",
+            "title": "Repeated failed authentication",
+            "description": "",
+            "kind": "threshold",
+            "source_type": "auth",
+            "match": {"action": "login_failed"},
+            "group_by": "src_ip",
+            "threshold": 5,
+            "window_minutes": 10,
+            "severity": "medium",
+            "mitre": ["T1110"],
+        }
+    )
+
+    assert analyze(events, [rule]) == []
+
+
 def test_success_after_failures_sequence():
     start = datetime(2026, 8, 17, 10, 0, tzinfo=timezone.utc)
     events = []
