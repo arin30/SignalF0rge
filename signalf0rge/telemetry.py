@@ -22,6 +22,9 @@ def _int_or_none(value):
 
 
 def normalize_windows_record(record: dict) -> Event:
+    if not isinstance(record, dict):
+        raise ValueError("Windows event must be a JSON object")
+
     event_id = _int_or_none(_first(record, "EventID", "event_id", "Id"))
     provider = str(_first(record, "ProviderName", "Provider", "provider") or "").lower()
     timestamp = _first(record, "UtcTime", "TimeCreated", "timestamp", "@timestamp")
