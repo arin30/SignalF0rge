@@ -27,6 +27,17 @@ def test_load_jsonl_ignores_blank_lines_and_sorts_by_timestamp():
         assert events[0].timestamp <= events[1].timestamp
 
 
+def test_load_jsonl_normalizes_timezone_offsets_to_utc():
+    with tempfile.TemporaryDirectory() as d:
+        p = Path(d) / "events.jsonl"
+        p.write_text(
+            '{"timestamp":"2026-08-17T03:00:00-07:00","source_type":"auth"}\n',
+            encoding="utf-8",
+        )
+        events = load_jsonl(p)
+        assert events[0].timestamp.isoformat() == "2026-08-17T10:00:00+00:00"
+
+
 def test_load_jsonl_reports_malformed_line_number():
     with tempfile.TemporaryDirectory() as d:
         p = Path(d) / "events.jsonl"
