@@ -15,7 +15,10 @@ def parse_timestamp(value: str) -> datetime:
 def normalize_record(record: dict) -> Event:
     missing = REQUIRED_FIELDS - set(record)
     if missing: raise ValueError(f"Missing required fields: {sorted(missing)}")
-    return Event(timestamp=parse_timestamp(str(record["timestamp"])), source_type=str(record["source_type"]).strip().lower(), host=record.get("host"), user=record.get("user"), src_ip=record.get("src_ip"), dst_ip=record.get("dst_ip"), dst_port=int(record["dst_port"]) if record.get("dst_port") is not None else None, action=record.get("action"), command=record.get("command"), message=record.get("message"), raw=dict(record))
+    source_type = record["source_type"]
+    if not isinstance(source_type, str) or not source_type.strip():
+        raise ValueError("source_type must be a non-empty string")
+    return Event(timestamp=parse_timestamp(str(record["timestamp"])), source_type=source_type.strip().lower(), host=record.get("host"), user=record.get("user"), src_ip=record.get("src_ip"), dst_ip=record.get("dst_ip"), dst_port=int(record["dst_port"]) if record.get("dst_port") is not None else None, action=record.get("action"), command=record.get("command"), message=record.get("message"), raw=dict(record))
 
 def load_jsonl(path: str | Path) -> list[Event]:
     events = []
