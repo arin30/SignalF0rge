@@ -5,6 +5,8 @@ from pathlib import Path
 def load_ground_truth(path):
     with Path(path).open("r", encoding="utf-8") as handle:
         data = json.load(handle)
+    if not isinstance(data, dict) or not isinstance(data.get("expected"), dict):
+        raise ValueError("ground truth must contain an 'expected' object")
     return {scenario: set(rule_ids) for scenario, rule_ids in data["expected"].items()}
 
 
