@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from signalf0rge.engine import analyze
 from signalf0rge.rules import load_rules
 from signalf0rge.telemetry import load_windows_jsonl
@@ -26,6 +28,17 @@ def test_windows_sysmon_adapter_normalizes_security_events():
     assert network.source_type == "network"
     assert network.user == "alex"
     assert network.dst_ip == "203.0.113.200"
+
+
+def test_windows_jsonl_reports_line_number_for_malformed_input(tmp_path):
+    telemetry = tmp_path / "events.jsonl"
+    telemetry.write_text(
+        '{"EventID": 1, "UtcTime": "2026-09-08T12:00:00Z"}\nnot-json\n',
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match=r"events\.jsonl:2:"):
+        load_windows_jsonl(telemetry)
 
 
 def test_windows_sysmon_sample_drives_detection_and_incident_correlation():
