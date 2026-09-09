@@ -17,6 +17,8 @@ def load_sigma_rule(path: str | Path) -> dict:
         raise ValueError("Sigma rule requires title and detection fields")
 
     tags = data.get("tags", []) or []
+    if isinstance(tags, str):
+        tags = [tags]
     attack = [tag for tag in tags if str(tag).startswith("attack.")]
     return {
         "title": data["title"],
