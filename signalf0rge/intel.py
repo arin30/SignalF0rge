@@ -91,16 +91,22 @@ def _event_observables(event: Event) -> Iterable[tuple[str, str, str]]:
             yield field, "url", str(value)
 
 
+def _match_key(observable_type: str, value: str) -> tuple[str, str]:
+    # Domain names and IP text are case-insensitive; URL paths may be case-sensitive.
+    normalized = value if observable_type == "url" else value.lower()
+    return observable_type, normalized
+
+
 def enrich_events(events: list[Event], indicators: list[Indicator]) -> list[IntelMatch]:
     index: dict[tuple[str, str], list[Indicator]] = {}
     for indicator in indicators:
-        key = (indicator.observable_type, indicator.value.lower())
+        key = _match_key(indicator.observable_type, indicator.value)
         index.setdefault(key, []).append(indicator)
 
     matches = []
     for event_index, event in enumerate(events):
         for field, observable_type, value in _event_observables(event):
-            for indicator in index.get((observable_type, value.lower()), []):
+            for indicator in index.get(_match_key(observable_type, value), []):
                 matches.append(
                     IntelMatch(
                         event_index=event_index,

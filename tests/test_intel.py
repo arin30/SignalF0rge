@@ -108,3 +108,27 @@ def test_domain_indicator_matches_raw_event_field(tmp_path):
     matches = enrich_events([event], load_stix_bundle(path))
     assert len(matches) == 1
     assert matches[0].field == "dns_query"
+
+
+def test_url_indicator_does_not_ignore_path_case(tmp_path):
+    bundle = {
+        "type": "bundle",
+        "objects": [
+            {
+                "type": "indicator",
+                "id": "indicator--url",
+                "name": "Case-sensitive path",
+                "pattern": "[url:value = 'https://example.test/Admin']",
+                "labels": [],
+            }
+        ],
+    }
+    path = tmp_path / "bundle.json"
+    path.write_text(json.dumps(bundle), encoding="utf-8")
+    event = Event(
+        timestamp=datetime(2026, 8, 17, tzinfo=timezone.utc),
+        source_type="web",
+        raw={"source_type": "web", "url": "https://example.test/admin"},
+    )
+
+    assert enrich_events([event], load_stix_bundle(path)) == []
