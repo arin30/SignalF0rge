@@ -208,6 +208,7 @@ def evaluate_multi_sequence(rule, events):
 
 
 def analyze(events, rules):
+    events = sorted(events, key=lambda event: event.timestamp)
     findings = []
     evaluators = {
         "contains": evaluate_contains,
