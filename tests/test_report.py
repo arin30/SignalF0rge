@@ -22,3 +22,10 @@ def test_write_html_escapes_untrusted_finding_content(tmp_path):
     assert "<script>alert(1)</script>" not in report
     assert "&lt;script&gt;alert(1)&lt;/script&gt;" in report
     assert "host:&lt;test&gt;" in report
+
+
+def test_write_html_handles_no_findings(tmp_path):
+    report = write_html([], tmp_path).read_text(encoding="utf-8")
+
+    assert "Total findings: 0" in report
+    assert "No findings generated." in report
