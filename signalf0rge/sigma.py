@@ -19,6 +19,8 @@ def load_sigma_rule(path: str | Path) -> dict:
     tags = data.get("tags", []) or []
     if isinstance(tags, str):
         tags = [tags]
+    elif not isinstance(tags, list):
+        raise ValueError("Sigma rule tags must be a string or list")
     attack = [tag for tag in tags if str(tag).startswith("attack.")]
     return {
         "title": data["title"],

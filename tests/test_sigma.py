@@ -45,3 +45,24 @@ def test_sigma_rejects_non_mapping_yaml(tmp_path):
         assert "YAML mapping" in str(exc)
     else:
         raise AssertionError("Expected non-mapping Sigma YAML to raise ValueError")
+
+
+def test_sigma_rejects_non_list_tag_mapping(tmp_path):
+    rule = tmp_path / "bad-tags.yml"
+    rule.write_text(
+        """title: Bad Tags
+detection:
+  selection:
+    Image: cmd.exe
+  condition: selection
+tags:
+  attack.t1059: true
+""",
+        encoding="utf-8",
+    )
+    try:
+        load_sigma_rule(rule)
+    except ValueError as exc:
+        assert "tags must be a string or list" in str(exc)
+    else:
+        raise AssertionError("Expected malformed Sigma tags to raise ValueError")
