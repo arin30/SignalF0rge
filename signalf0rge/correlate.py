@@ -12,5 +12,5 @@ def entity_for(event, preferred=None):
     return "event:unknown"
 
 def severity_score(severity, evidence_count):
-    base = SEVERITY_SCORES.get(severity.lower(), 25)
+    base = SEVERITY_SCORES.get(severity.strip().lower(), 25)
     return min(100, base + max(0, evidence_count - 1) * 2)
