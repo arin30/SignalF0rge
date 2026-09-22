@@ -173,3 +173,15 @@ def test_advanced_samples_cover_phase2_and_phase3():
     assert incident.entity == "user:alex"
     assert incident.evidence_count == 4
     assert incident.score == 100
+
+
+def test_load_rules_rejects_duplicate_ids(tmp_path):
+    rules_file = tmp_path / "rules.yml"
+    rules_file.write_text("rules:\n  - id: DUP-001\n  - id: DUP-001\n", encoding="utf-8")
+
+    try:
+        load_rules(rules_file)
+    except ValueError as exc:
+        assert "unique" in str(exc)
+    else:
+        raise AssertionError("duplicate rule IDs should be rejected")
