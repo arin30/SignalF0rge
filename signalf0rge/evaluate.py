@@ -7,6 +7,9 @@ def load_ground_truth(path):
         data = json.load(handle)
     if not isinstance(data, dict) or not isinstance(data.get("expected"), dict):
         raise ValueError("ground truth must contain an 'expected' object")
+    for scenario, rule_ids in data["expected"].items():
+        if not isinstance(rule_ids, list) or not all(isinstance(rule_id, str) for rule_id in rule_ids):
+            raise ValueError(f"ground truth scenario {scenario!r} must contain a list of rule IDs")
     return {scenario: set(rule_ids) for scenario, rule_ids in data["expected"].items()}
 
 
