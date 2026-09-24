@@ -8,6 +8,10 @@ def test_entity_for_prefers_requested_field_then_falls_back():
     assert entity_for(event, "missing") == "user:alice"
 
 
+def test_entity_for_returns_unknown_when_no_identity_fields_exist():
+    assert entity_for({"event_type": "process_start"}) == "event:unknown"
+
+
 def test_severity_score_increases_with_evidence_and_caps_at_100():
     assert severity_score("high", 1) == 75
     assert severity_score("high", 4) == 81
