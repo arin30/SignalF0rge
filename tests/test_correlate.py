@@ -8,6 +8,12 @@ def test_entity_for_prefers_requested_field_then_falls_back():
     assert entity_for(event, "missing") == "user:alice"
 
 
+def test_entity_for_skips_empty_identity_values():
+    event = {"user": "", "host": None, "src_ip": "192.0.2.10"}
+
+    assert entity_for(event) == "src_ip:192.0.2.10"
+
+
 def test_entity_for_returns_unknown_when_no_identity_fields_exist():
     assert entity_for({"event_type": "process_start"}) == "event:unknown"
 
