@@ -38,6 +38,17 @@ def test_load_jsonl_normalizes_timezone_offsets_to_utc():
         assert events[0].timestamp.isoformat() == "2026-08-17T10:00:00+00:00"
 
 
+def test_load_jsonl_normalizes_source_type_case_and_whitespace():
+    with tempfile.TemporaryDirectory() as d:
+        p = Path(d) / "events.jsonl"
+        p.write_text(
+            '{"timestamp":"2026-08-17T10:00:00Z","source_type":"  AUTH  "}\n',
+            encoding="utf-8",
+        )
+        events = load_jsonl(p)
+        assert events[0].source_type == "auth"
+
+
 def test_load_jsonl_rejects_blank_source_type():
     with tempfile.TemporaryDirectory() as d:
         p = Path(d) / "events.jsonl"
