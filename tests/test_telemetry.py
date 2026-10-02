@@ -41,6 +41,19 @@ def test_windows_jsonl_reports_line_number_for_malformed_input(tmp_path):
         load_windows_jsonl(telemetry)
 
 
+def test_windows_jsonl_ignores_blank_lines(tmp_path):
+    telemetry = tmp_path / "events.jsonl"
+    telemetry.write_text(
+        '\n  \n{"EventID": 1, "UtcTime": "2026-09-08T12:00:00Z"}\n\n',
+        encoding="utf-8",
+    )
+
+    events = load_windows_jsonl(telemetry)
+
+    assert len(events) == 1
+    assert events[0].get("windows_event_id") == 1
+
+
 def test_windows_sysmon_sample_drives_detection_and_incident_correlation():
     root = Path(__file__).resolve().parents[1]
     events = load_windows_jsonl(root / "samples" / "windows_sysmon_events.jsonl")
