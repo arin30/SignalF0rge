@@ -1,5 +1,5 @@
 from signalf0rge.models import Finding
-from signalf0rge.report import write_html
+from signalf0rge.report import write_html, write_json
 
 
 def test_write_html_escapes_untrusted_finding_content(tmp_path):
@@ -29,3 +29,10 @@ def test_write_html_handles_no_findings(tmp_path):
 
     assert "Total findings: 0" in report
     assert "No findings generated." in report
+
+
+def test_write_json_handles_no_findings(tmp_path):
+    path = write_json([], tmp_path / "nested")
+
+    assert path.name == "findings.json"
+    assert path.read_text(encoding="utf-8") == "[]"
