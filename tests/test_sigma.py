@@ -66,3 +66,19 @@ tags:
         assert "tags must be a string or list" in str(exc)
     else:
         raise AssertionError("Expected malformed Sigma tags to raise ValueError")
+
+
+def test_sigma_accepts_single_string_tag(tmp_path):
+    rule = tmp_path / "string-tag.yml"
+    rule.write_text(
+        """title: String Tag
+detection:
+  selection:
+    Image: powershell.exe
+  condition: selection
+tags: attack.t1059.001
+""",
+        encoding="utf-8",
+    )
+    loaded = load_sigma_rule(rule)
+    assert loaded["attack_tags"] == ["attack.t1059.001"]
