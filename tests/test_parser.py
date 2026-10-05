@@ -64,6 +64,21 @@ def test_load_jsonl_rejects_blank_source_type():
             raise AssertionError("blank source_type should raise ValueError")
 
 
+def test_load_jsonl_rejects_non_numeric_destination_port():
+    with tempfile.TemporaryDirectory() as d:
+        p = Path(d) / "events.jsonl"
+        p.write_text(
+            '{"timestamp":"2026-08-17T10:00:00Z","source_type":"network","dst_port":"https"}\n',
+            encoding="utf-8",
+        )
+        try:
+            load_jsonl(p)
+        except ValueError as exc:
+            assert f"{p}:1:" in str(exc)
+        else:
+            raise AssertionError("non-numeric dst_port should raise ValueError")
+
+
 def test_load_jsonl_reports_malformed_line_number():
     with tempfile.TemporaryDirectory() as d:
         p = Path(d) / "events.jsonl"
