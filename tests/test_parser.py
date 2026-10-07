@@ -93,3 +93,18 @@ def test_load_jsonl_reports_malformed_line_number():
             assert f"{p}:2:" in str(exc)
         else:
             raise AssertionError("malformed JSONL should raise ValueError")
+
+
+def test_load_jsonl_rejects_non_string_source_type():
+    with tempfile.TemporaryDirectory() as d:
+        p = Path(d) / "events.jsonl"
+        p.write_text(
+            '{"timestamp":"2026-08-17T10:00:00Z","source_type":123}\n',
+            encoding="utf-8",
+        )
+        try:
+            load_jsonl(p)
+        except ValueError as exc:
+            assert "source_type must be a non-empty string" in str(exc)
+        else:
+            raise AssertionError("non-string source_type should raise ValueError")
