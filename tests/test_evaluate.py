@@ -44,3 +44,22 @@ def test_empty_evaluation_returns_zero_metrics():
     assert metrics["precision"] == 0.0
     assert metrics["recall"] == 0.0
     assert metrics["f1"] == 0.0
+
+
+def test_evaluation_counts_false_positives_and_missed_cases():
+    from types import SimpleNamespace
+
+    findings = [
+        SimpleNamespace(rule_id="rule-a", evidence=[{"scenario": "attack"}]),
+        SimpleNamespace(rule_id="rule-b", evidence=[{"scenario": "benign"}]),
+    ]
+    metrics = evaluate_findings(findings, {"attack": {"rule-a", "rule-c"}})
+
+    assert metrics["true_positives"] == 1
+    assert metrics["false_positives"] == 1
+    assert metrics["false_negatives"] == 1
+    assert metrics["precision"] == 0.5
+    assert metrics["recall"] == 0.5
+    assert metrics["f1"] == 0.5
+    assert metrics["false_positive_cases"] == ["benign:rule-b"]
+    assert metrics["missed_cases"] == ["attack:rule-c"]
