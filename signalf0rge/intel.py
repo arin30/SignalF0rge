@@ -40,6 +40,8 @@ def _parse_indicator(obj: dict) -> Indicator | None:
     if obj.get("type") != "indicator":
         return None
     pattern = obj.get("pattern", "")
+    if not isinstance(pattern, str):
+        return None
     match = _PATTERN.fullmatch(pattern.strip())
     if not match:
         return None
