@@ -7,7 +7,7 @@ REQUIRED_FIELDS = {"timestamp", "source_type"}
 
 def parse_timestamp(value: str) -> datetime:
     value = value.strip()
-    if value.endswith("Z"): value = value[:-1] + "+00:00"
+    if value.endswith(("Z", "z")): value = value[:-1] + "+00:00"
     dt = datetime.fromisoformat(value)
     if dt.tzinfo is None: dt = dt.replace(tzinfo=timezone.utc)
     return dt.astimezone(timezone.utc)
