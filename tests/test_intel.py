@@ -110,6 +110,21 @@ def test_domain_indicator_matches_raw_event_field(tmp_path):
     assert matches[0].field == "dns_query"
 
 
+def test_non_string_stix_pattern_is_skipped(tmp_path):
+    bundle = {
+        "type": "bundle",
+        "objects": [
+            {"type": "indicator", "id": "indicator--malformed", "pattern": 123},
+            {"type": "indicator", "id": "indicator--valid", "pattern": "[domain-name:value = 'safe.example']"},
+        ],
+    }
+    path = tmp_path / "mixed-bundle.json"
+    path.write_text(json.dumps(bundle), encoding="utf-8")
+    indicators = load_stix_bundle(path)
+    assert len(indicators) == 1
+    assert indicators[0].id == "indicator--valid"
+
+
 def test_url_indicator_does_not_ignore_path_case(tmp_path):
     bundle = {
         "type": "bundle",
