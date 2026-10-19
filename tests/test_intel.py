@@ -125,6 +125,23 @@ def test_non_string_stix_pattern_is_skipped(tmp_path):
     assert indicators[0].id == "indicator--valid"
 
 
+def test_domain_indicator_matches_case_insensitively(tmp_path):
+    bundle = {
+        "type": "bundle",
+        "objects": [{"type": "indicator", "id": "indicator--case", "pattern": "[domain-name:value = 'Example.TEST']"}],
+    }
+    path = tmp_path / "domain-case.json"
+    path.write_text(json.dumps(bundle), encoding="utf-8")
+    event = Event(
+        timestamp=datetime(2026, 8, 17, tzinfo=timezone.utc),
+        source_type="dns",
+        raw={"dns_query": "example.test"},
+    )
+    matches = enrich_events([event], load_stix_bundle(path))
+    assert len(matches) == 1
+    assert matches[0].field == "dns_query"
+
+
 def test_url_indicator_does_not_ignore_path_case(tmp_path):
     bundle = {
         "type": "bundle",
