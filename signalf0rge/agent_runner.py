@@ -7,7 +7,7 @@ from typing import Any
 
 from .agent import Investigation
 from .models import Event, Finding
-from .investigation_tools import get_related_findings, map_attack, search_events
+from .investigation_tools import get_entity_links, get_related_findings, map_attack, search_events
 
 
 @dataclass
@@ -91,6 +91,15 @@ def run_investigation(
         result_count=len(related.results),
         evidence=related.results,
     ))
+
+    links = get_entity_links(events, case.entity)
+    if links.results:
+        steps.append(AgentStep(
+            tool=links.tool,
+            reason="Discover users, hosts, and IP addresses directly connected in telemetry.",
+            result_count=len(links.results),
+            evidence=links.results,
+        ))
 
     attack = map_attack(findings, case.entity)
     steps.append(AgentStep(
