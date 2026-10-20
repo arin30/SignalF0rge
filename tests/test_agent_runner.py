@@ -46,6 +46,7 @@ def test_agent_runs_evidence_tools_and_escalates_high_case():
     assert report.entity == "alice"
     assert [step.tool for step in report.steps] == [
         "get_related_findings",
+        "get_entity_links",
         "map_attack",
         "search_events",
     ]
