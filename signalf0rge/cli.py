@@ -8,6 +8,8 @@ from .report import write_json, write_html
 from .sigma import load_sigma_rule, sigma_summary
 from .intel import load_stix_bundle, enrich_events, write_intel_matches
 from .evaluate import load_ground_truth, evaluate_findings, write_evaluation
+from .agent import investigate
+import json
 
 
 def main():
@@ -35,6 +37,12 @@ def main():
     i.add_argument("--stix", required=True, help="Path to a STIX bundle")
     i.add_argument("--out", default="output/intel_matches.json")
 
+    inv = sub.add_parser("investigate", help="Build investigation cases from security telemetry")
+    inv.add_argument("input")
+    inv.add_argument("--format", choices=["normalized", "windows"], default="normalized")
+    inv.add_argument("--rules", default="rules.yml")
+    inv.add_argument("--out", default="output/investigations.json")
+
     args = parser.parse_args()
 
     if args.command == "sigma":
@@ -54,6 +62,17 @@ def main():
     events = load_events(args.input, args.format)
     rules = load_rules(args.rules)
     findings = analyze(events, rules)
+
+    if args.command == "investigate":
+        cases = investigate(findings)
+        path = Path(args.out)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps([case.to_dict() for case in cases], indent=2), encoding="utf-8")
+        print(f"Analyzed {len(events)} events")
+        print(f"Generated {len(findings)} findings")
+        print(f"Built {len(cases)} investigation cases")
+        print(f"Investigations: {path}")
+        return
 
     if args.command == "evaluate":
         expected = load_ground_truth(args.labels)
