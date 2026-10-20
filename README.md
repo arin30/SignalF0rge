@@ -112,6 +112,23 @@ signalf0rge intel samples/events.jsonl \
 
 The matcher currently supports exact IPv4, IPv6, domain, and URL values. Unsupported STIX patterns are skipped rather than guessed at. I kept the first version offline so it can be tested without API keys or an external service.
 
+## Investigation agent
+
+SignalF0rge can group deterministic detections into entity-centric investigation cases:
+
+```bash
+signalf0rge investigate samples/advanced_events.jsonl --agent --out output/investigations.json
+```
+
+The default agent mode uses local, read-only tools to collect related findings, ATT&CK mappings, and matching telemetry. An optional LLM planner can choose those evidence pivots dynamically:
+
+```bash
+export OPENAI_API_KEY=your_key_here
+signalf0rge investigate samples/advanced_events.jsonl --llm --model gpt-5-mini --out output/llm-investigations.json
+```
+
+The LLM is only a planner. It cannot change detections, execute shell commands, or call arbitrary functions. Requested actions are validated against a small read-only tool allowlist, while severity and evidence remain grounded in SignalF0rge's deterministic findings.
+
 ## Tests
 
 ```bash
