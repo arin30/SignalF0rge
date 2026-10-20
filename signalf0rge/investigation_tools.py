@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from typing import Any, Callable
 
 from .models import Event, Finding
+from .entity_linking import link_entities
 
 
 @dataclass
@@ -73,3 +74,9 @@ def map_attack(findings: list[Finding], entity: str) -> ToolResult:
 
 
 Tool = Callable[..., ToolResult]
+
+
+def get_entity_links(events: list[Event], entity: str) -> ToolResult:
+    """Return directly observed user/host/IP relationships for an entity."""
+    links = [link.to_dict() for link in link_entities(events, entity)]
+    return ToolResult("get_entity_links", {"entity": entity}, links)
