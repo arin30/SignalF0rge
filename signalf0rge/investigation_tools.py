@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from typing import Any, Callable
 
 from .models import Event, Finding
-from .entity_linking import link_entities
+from .entity_linking import link_entities, traverse_entities
 
 
 @dataclass
@@ -80,3 +80,15 @@ def get_entity_links(events: list[Event], entity: str) -> ToolResult:
     """Return directly observed user/host/IP relationships for an entity."""
     links = [link.to_dict() for link in link_entities(events, entity)]
     return ToolResult("get_entity_links", {"entity": entity}, links)
+
+
+def traverse_entity_graph(
+    events: list[Event], entity: str, max_depth: int = 2, max_nodes: int = 25
+) -> ToolResult:
+    """Return a bounded multi-hop relationship graph rooted at an entity."""
+    links = [link.to_dict() for link in traverse_entities(events, entity, max_depth, max_nodes)]
+    return ToolResult(
+        "traverse_entity_graph",
+        {"entity": entity, "max_depth": max_depth, "max_nodes": max_nodes},
+        links,
+    )
