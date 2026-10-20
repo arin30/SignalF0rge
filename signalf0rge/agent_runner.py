@@ -43,12 +43,26 @@ def run_llm_investigation(
     """Let an LLM choose read-only evidence pivots within strict guardrails."""
     from .llm_agent import choose_tool, execute_decision
 
+    if max_steps < 1 or max_steps > 10:
+        raise ValueError("max_steps must be between 1 and 10")
+
     steps: list[AgentStep] = []
+    seen_calls: set[str] = set()
     for _ in range(max_steps):
         previous = [asdict(step) for step in steps]
         decision = choose_tool(case, previous, api_key, model)
         if decision is None:
             break
+        call_key = f"{decision.tool}:{decision.arguments}"
+        if call_key in seen_calls:
+            steps.append(AgentStep(
+                tool=decision.tool,
+                reason="Stopped repeated tool request to avoid an investigation loop.",
+                result_count=0,
+                evidence=[],
+            ))
+            break
+        seen_calls.add(call_key)
         result = execute_decision(decision, events, findings, case.entity)
         steps.append(
             AgentStep(
