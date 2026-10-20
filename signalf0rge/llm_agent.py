@@ -14,11 +14,11 @@ from dataclasses import dataclass
 from typing import Any
 
 from .agent import Investigation
-from .investigation_tools import get_related_findings, map_attack, search_events
+from .investigation_tools import get_entity_links, get_related_findings, map_attack, search_events
 from .models import Event, Finding
 
 
-_ALLOWED_TOOLS = {"get_related_findings", "map_attack", "search_events"}
+_ALLOWED_TOOLS = {"get_entity_links", "get_related_findings", "map_attack", "search_events"}
 
 
 @dataclass
@@ -53,7 +53,7 @@ def choose_tool(
     system = (
         "You are a SOC investigation planner. Choose at most one read-only tool. "
         "Never invent evidence. Return JSON only. Allowed tools: "
-        "get_related_findings(entity), map_attack(entity), "
+        get_entity_links(entity), get_related_findings(entity), map_attack(entity), 
         "search_events(field, value). Return {\"done\": true} when enough evidence "
         "has been gathered, otherwise return tool, arguments, and reason."
     )
@@ -91,6 +91,8 @@ def execute_decision(
     entity: str,
 ):
     """Validate model arguments and execute one allowlisted read-only tool."""
+    if decision.tool == "get_entity_links":
+        return get_entity_links(events, entity)
     if decision.tool == "get_related_findings":
         return get_related_findings(findings, entity)
     if decision.tool == "map_attack":
