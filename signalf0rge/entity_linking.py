@@ -52,3 +52,40 @@ def link_entities(events: list[Event], entity: str) -> list[EntityLink]:
         for (source, target, relationship), observations in counts.items()
     ]
     return sorted(links, key=lambda link: (-link.observations, link.relationship, link.target))
+
+
+def traverse_entities(
+    events: list[Event],
+    entity: str,
+    max_depth: int = 2,
+    max_nodes: int = 25,
+) -> list[EntityLink]:
+    """Traverse observed entity relationships with strict depth and node bounds."""
+    if max_depth < 1 or max_depth > 3:
+        raise ValueError("max_depth must be between 1 and 3")
+    if max_nodes < 2 or max_nodes > 100:
+        raise ValueError("max_nodes must be between 2 and 100")
+
+    seen = {str(entity)}
+    frontier = [str(entity)]
+    collected: dict[tuple[str, str, str], EntityLink] = {}
+
+    for _ in range(max_depth):
+        next_frontier: list[str] = []
+        for current in frontier:
+            for link in link_entities(events, current):
+                key = (link.source, link.target, link.relationship)
+                collected[key] = link
+                if link.target not in seen and len(seen) < max_nodes:
+                    seen.add(link.target)
+                    next_frontier.append(link.target)
+            if len(seen) >= max_nodes:
+                break
+        if not next_frontier or len(seen) >= max_nodes:
+            break
+        frontier = next_frontier
+
+    return sorted(
+        collected.values(),
+        key=lambda link: (link.source, -link.observations, link.relationship, link.target),
+    )

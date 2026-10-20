@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from signalf0rge.agent import investigate
-from signalf0rge.agent_runner import run_investigation
+from signalf0rge.agent_runner import run_investigation, run_llm_investigation
 from signalf0rge.investigation_tools import search_events
 from signalf0rge.models import Event, Finding
 
@@ -51,3 +51,33 @@ def test_agent_runs_evidence_tools_and_escalates_high_case():
         "search_events",
     ]
     assert "Conclusions are limited" in report.evidence_summary
+
+
+def test_llm_runner_stops_repeated_tool_calls(monkeypatch):
+    findings = [_finding()]
+    events = [Event(datetime(2026, 10, 20, 10), "endpoint", user="alice", host="ws-1")]
+    case = investigate(findings)[0]
+
+    from signalf0rge.llm_agent import LLMDecision
+    monkeypatch.setattr(
+        "signalf0rge.llm_agent.choose_tool",
+        lambda *args, **kwargs: LLMDecision("get_related_findings", {}, "repeat"),
+    )
+
+    report = run_llm_investigation(case, events, findings, "test-key", "test-model")
+
+    assert len(report.steps) == 2
+    assert report.steps[-1].result_count == 0
+    assert "repeated tool request" in report.steps[-1].reason
+
+
+def test_llm_runner_rejects_excessive_step_budget():
+    findings = [_finding()]
+    case = investigate(findings)[0]
+
+    try:
+        run_llm_investigation(case, [], findings, "test-key", "test-model", max_steps=100)
+    except ValueError as exc:
+        assert "max_steps" in str(exc)
+    else:
+        raise AssertionError("expected max_steps validation")
