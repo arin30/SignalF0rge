@@ -9,6 +9,7 @@ from .sigma import load_sigma_rule, sigma_summary
 from .intel import load_stix_bundle, enrich_events, write_intel_matches
 from .evaluate import load_ground_truth, evaluate_findings, write_evaluation
 from .agent import investigate
+from .agent_runner import run_investigation
 import json
 
 
@@ -42,6 +43,7 @@ def main():
     inv.add_argument("--format", choices=["normalized", "windows"], default="normalized")
     inv.add_argument("--rules", default="rules.yml")
     inv.add_argument("--out", default="output/investigations.json")
+    inv.add_argument("--agent", action="store_true", help="Run read-only investigation tools for each case")
 
     args = parser.parse_args()
 
@@ -67,10 +69,15 @@ def main():
         cases = investigate(findings)
         path = Path(args.out)
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps([case.to_dict() for case in cases], indent=2), encoding="utf-8")
+        payload = [case.to_dict() for case in cases]
+        if args.agent:
+            payload = [run_investigation(case, events, findings).to_dict() for case in cases]
+        path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
         print(f"Analyzed {len(events)} events")
         print(f"Generated {len(findings)} findings")
         print(f"Built {len(cases)} investigation cases")
+        if args.agent:
+            print("Ran evidence-grounded investigation tools")
         print(f"Investigations: {path}")
         return
 
