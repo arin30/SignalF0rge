@@ -68,6 +68,29 @@ def test_stix_ip_indicator_matches_source_ip(tmp_path):
     assert matches[0].indicator.confidence == 80
 
 
+def test_stix_ipv6_indicator_matches_source_ip(tmp_path):
+    bundle = {
+        "type": "bundle",
+        "objects": [{
+            "type": "indicator",
+            "id": "indicator--ipv6",
+            "pattern": "[ipv6-addr:value = '2001:db8::42']",
+        }],
+    }
+    path = tmp_path / "ipv6-bundle.json"
+    path.write_text(json.dumps(bundle), encoding="utf-8")
+    event = Event(
+        timestamp=datetime(2026, 8, 17, tzinfo=timezone.utc),
+        source_type="network",
+        src_ip="2001:DB8::42",
+        raw={"src_ip": "2001:DB8::42"},
+    )
+    matches = enrich_events([event], load_stix_bundle(path))
+    assert len(matches) == 1
+    assert matches[0].field == "src_ip"
+    assert matches[0].indicator.id == "indicator--ipv6"
+
+
 def test_unsupported_stix_pattern_is_skipped(tmp_path):
     bundle = {
         "type": "bundle",
