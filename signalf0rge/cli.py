@@ -8,6 +8,9 @@ from .report import write_json, write_html
 from .sigma import load_sigma_rule, sigma_summary
 from .intel import load_stix_bundle, enrich_events, write_intel_matches
 from .evaluate import load_ground_truth, evaluate_findings, write_evaluation
+from .agent import investigate
+from .agent_runner import run_investigation, run_llm_investigation
+import json\nimport os
 
 
 def main():
@@ -35,6 +38,13 @@ def main():
     i.add_argument("--stix", required=True, help="Path to a STIX bundle")
     i.add_argument("--out", default="output/intel_matches.json")
 
+    inv = sub.add_parser("investigate", help="Build investigation cases from security telemetry")
+    inv.add_argument("input")
+    inv.add_argument("--format", choices=["normalized", "windows"], default="normalized")
+    inv.add_argument("--rules", default="rules.yml")
+    inv.add_argument("--out", default="output/investigations.json")
+    inv.add_argument("--agent", action="store_true", help="Run read-only investigation tools for each case")\n    inv.add_argument("--llm", action="store_true", help="Let an LLM choose investigation tool calls")\n    inv.add_argument("--model", default="gpt-5-mini", help="OpenAI-compatible model name")
+
     args = parser.parse_args()
 
     if args.command == "sigma":
@@ -54,6 +64,22 @@ def main():
     events = load_events(args.input, args.format)
     rules = load_rules(args.rules)
     findings = analyze(events, rules)
+
+    if args.command == "investigate":
+        cases = investigate(findings)
+        path = Path(args.out)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        payload = [case.to_dict() for case in cases]
+        if args.agent:
+            payload = [run_investigation(case, events, findings).to_dict() for case in cases]
+        path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        print(f"Analyzed {len(events)} events")
+        print(f"Generated {len(findings)} findings")
+        print(f"Built {len(cases)} investigation cases")
+        if args.agent:
+            print("Ran evidence-grounded investigation tools")
+        print(f"Investigations: {path}")
+        return
 
     if args.command == "evaluate":
         expected = load_ground_truth(args.labels)
