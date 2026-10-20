@@ -9,8 +9,8 @@ from .sigma import load_sigma_rule, sigma_summary
 from .intel import load_stix_bundle, enrich_events, write_intel_matches
 from .evaluate import load_ground_truth, evaluate_findings, write_evaluation
 from .agent import investigate
-from .agent_runner import run_investigation
-import json
+from .agent_runner import run_investigation, run_llm_investigation
+import json\nimport os
 
 
 def main():
@@ -43,7 +43,7 @@ def main():
     inv.add_argument("--format", choices=["normalized", "windows"], default="normalized")
     inv.add_argument("--rules", default="rules.yml")
     inv.add_argument("--out", default="output/investigations.json")
-    inv.add_argument("--agent", action="store_true", help="Run read-only investigation tools for each case")
+    inv.add_argument("--agent", action="store_true", help="Run read-only investigation tools for each case")\n    inv.add_argument("--llm", action="store_true", help="Let an LLM choose investigation tool calls")\n    inv.add_argument("--model", default="gpt-5-mini", help="OpenAI-compatible model name")
 
     args = parser.parse_args()
 
