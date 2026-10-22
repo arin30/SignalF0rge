@@ -63,3 +63,33 @@ def test_evaluation_counts_false_positives_and_missed_cases():
     assert metrics["f1"] == 0.5
     assert metrics["false_positive_cases"] == ["benign:rule-b"]
     assert metrics["missed_cases"] == ["attack:rule-c"]
+
+
+def test_benchmark_combines_detection_and_investigation_scores(tmp_path):
+    from signalf0rge.benchmark import benchmark
+
+    generator = load_generator()
+    events_data, expected = generator.build_dataset(benign_events=300, seed=7)
+    events_path = tmp_path / "events.jsonl"
+    labels_path = tmp_path / "labels.json"
+    generator.write_dataset(events_data, expected, events_path, labels_path)
+
+    root = Path(__file__).resolve().parents[1]
+    result = benchmark(
+        events_path,
+        root / "rules.yml",
+        {scenario: set(rules) for scenario, rules in expected.items()},
+        {
+            "alex": {
+                "expected_tools": ["get_related_findings", "map_attack", "search_events"],
+                "expected_verdict": "escalate",
+                "max_steps": 5,
+            }
+        },
+    )
+
+    assert result["events"] == 348
+    assert result["detection"]["f1"] >= 0.95
+    assert result["investigation"]["summary"]["cases"] == 1
+    assert result["investigation"]["summary"]["grounded_verdict_rate"] == 1.0
+    assert result["investigation"]["cases"][0]["entity"] == "alex"
