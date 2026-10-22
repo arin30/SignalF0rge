@@ -171,14 +171,13 @@ raw events -> normalize -> detect -> correlate -> score -> JSON / HTML
                                    -> STIX indicator matches
 ```
 
-## Evaluation roadmap
+## Evaluation and realism
 
-The next phase is focused on proving behavior rather than adding more agent features. The evaluation work will measure two separate layers:
+SignalF0rge now evaluates detection quality and investigation behavior separately.
 
-- detection quality against labeled telemetry: precision, recall, F1, false positives, and false negatives
-- investigation quality: whether the planner chooses useful evidence pivots, avoids redundant calls, stays within its tool budget, and remains grounded when prior-case context is misleading
+The mixed detection benchmark contains 3,000 ordinary benign events plus 21 labeled attack scenarios. A harder adversarial-benign layer adds 19 legitimate events that deliberately resemble attacks: approved PowerShell administration, scheduled-task and service creation, vulnerability scanning, and an expired-password login burst.
 
-The datasets include normal background activity alongside labeled attack scenarios so improvements are measured against noise rather than only clean demonstrations. The current mixed benchmark generates 3,000 benign events plus 21 attack scenarios and asserts at least 0.95 precision, recall, and F1.
+On the 3,067-event adversarial benchmark, the current rules produce 31 true-positive scenario/rule cases, 8 known false-positive cases, and 0 false negatives: 79.49% precision, 100% recall, and 88.57% F1. CI pins the exact known false-positive set so additional unexplained false positives fail the regression suite. See [the adversarial benign benchmark](docs/adversarial-benign-benchmark.md) for the measured baseline and interpretation.
 
 Agent evaluation is scored separately: useful evidence pivots, redundant tool calls, tool-budget compliance, and deterministic-verdict grounding. Adversarial tests also feed misleading prior case history to the planner and verify that old verdicts cannot change the current deterministic result.
 
