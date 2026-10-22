@@ -28,7 +28,7 @@ def test_large_mixed_dataset_evaluation(tmp_path):
     findings = analyze(events, load_rules(root / "rules.yml"))
     metrics = evaluate_findings(findings, {scenario: set(rules) for scenario, rules in expected.items()})
 
-    assert len(events) == 3048
+    assert len(events) == 3067
     assert len(expected) == 21
     assert metrics["expected_cases"] >= 30
     assert metrics["recall"] >= 0.95
@@ -88,7 +88,7 @@ def test_benchmark_combines_detection_and_investigation_scores(tmp_path):
         },
     )
 
-    assert result["events"] == 348
+    assert result["events"] == 367
     assert result["detection"]["f1"] >= 0.95
     assert result["investigation"]["summary"]["cases"] == 1
     assert result["investigation"]["summary"]["grounded_verdict_rate"] == 1.0
