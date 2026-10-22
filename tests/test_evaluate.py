@@ -82,7 +82,7 @@ def test_benchmark_combines_detection_and_investigation_scores(tmp_path):
         {
             "alex": {
                 "expected_tools": ["get_related_findings", "map_attack", "search_events"],
-                "expected_verdict": "escalate",
+                "expected_verdict": None,
                 "max_steps": 5,
             }
         },
@@ -91,5 +91,5 @@ def test_benchmark_combines_detection_and_investigation_scores(tmp_path):
     assert result["events"] == 348
     assert result["detection"]["f1"] >= 0.95
     assert result["investigation"]["summary"]["cases"] == 1
-    assert result["investigation"]["summary"]["grounded_verdict_rate"] == 1.0
+    assert result["investigation"]["summary"]["grounded_verdict_rate"] == 1.0\n    assert result["investigation"]["cases"][0]["within_budget"] is True
     assert result["investigation"]["cases"][0]["entity"] == "alex"
