@@ -105,7 +105,7 @@ def write_html(findings, out_dir):
           </div>
         </article>''')
 
-    empty = '''<section class="empty-state"><div class="empty-icon">✓</div><h2>No findings generated</h2><p>Total findings: 0 · The analyzed telemetry did not produce any SignalF0rge findings.</p></section>'''
+    empty = '''<section class="empty-state"><div class="empty-icon">✓</div><h2>No findings generated.</h2><p>Total findings: 0 · The analyzed telemetry did not produce any SignalF0rge findings.</p></section>'''
 
     html = f'''<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
