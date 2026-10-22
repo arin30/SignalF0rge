@@ -171,6 +171,17 @@ raw events -> normalize -> detect -> correlate -> score -> JSON / HTML
                                    -> STIX indicator matches
 ```
 
+## Evaluation roadmap
+
+The next phase is focused on proving behavior rather than adding more agent features. The evaluation work will measure two separate layers:
+
+- detection quality against labeled telemetry: precision, recall, F1, false positives, and false negatives
+- investigation quality: whether the planner chooses useful evidence pivots, avoids redundant calls, stays within its tool budget, and remains grounded when prior-case context is misleading
+
+The datasets include normal background activity alongside labeled attack scenarios so improvements are measured against noise rather than only clean demonstrations. The current mixed benchmark generates 3,000 benign events plus 21 attack scenarios and asserts at least 0.95 precision, recall, and F1.
+
+Agent evaluation is scored separately: useful evidence pivots, redundant tool calls, tool-budget compliance, and deterministic-verdict grounding. Adversarial tests also feed misleading prior case history to the planner and verify that old verdicts cannot change the current deterministic result.
+
 ## What I want to add next
 
 The biggest thing I want to improve is entity linking. Right now user identity is useful for tying several sources together, but real investigations often need to connect users, hosts, IPs, and sessions even when there is no single shared field.
