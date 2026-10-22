@@ -81,3 +81,46 @@ def test_llm_runner_rejects_excessive_step_budget():
         assert "max_steps" in str(exc)
     else:
         raise AssertionError("expected max_steps validation")
+
+
+def test_llm_runner_passes_only_matching_entity_history(monkeypatch):
+    findings = [_finding()]
+    case = investigate(findings)[0]
+    captured = {}
+
+    def fake_choose(case, previous, api_key, model, prior_cases=None, **kwargs):
+        captured["prior_cases"] = prior_cases
+        return None
+
+    monkeypatch.setattr("signalf0rge.llm_agent.choose_tool", fake_choose)
+    history = [
+        {"entity": "bob", "verdict": "escalate"},
+        {"entity": "alice", "verdict": "review"},
+    ]
+
+    report = run_llm_investigation(
+        case, [], findings, "test-key", "test-model", case_history=history
+    )
+
+    assert captured["prior_cases"] == [{"entity": "alice", "verdict": "review"}]
+    assert report.verdict == "escalate"
+    assert report.severity == "high"
+    assert "1 bounded prior case" in report.evidence_summary
+
+
+def test_prior_verdict_does_not_override_current_deterministic_verdict(monkeypatch):
+    findings = [_finding(severity="medium")]
+    case = investigate(findings)[0]
+    monkeypatch.setattr("signalf0rge.llm_agent.choose_tool", lambda *args, **kwargs: None)
+
+    report = run_llm_investigation(
+        case,
+        [],
+        findings,
+        "test-key",
+        "test-model",
+        case_history=[{"entity": "alice", "verdict": "escalate", "severity": "critical"}],
+    )
+
+    assert report.verdict == "review"
+    assert report.severity == "medium"

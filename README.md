@@ -129,6 +129,19 @@ signalf0rge investigate samples/advanced_events.jsonl --llm --model gpt-5-mini -
 
 The LLM is only a planner. It cannot change detections, execute shell commands, or call arbitrary functions. Requested actions are validated against a small read-only tool allowlist, while severity and evidence remain grounded in SignalF0rge's deterministic findings.
 
+## Bounded case memory
+
+Repeated LLM-planned investigations can optionally keep compact case history:
+
+```bash
+signalf0rge investigate samples/advanced_events.jsonl \
+  --llm --model gpt-5-mini \
+  --case-history output/case-history.json \
+  --out output/llm-investigations.json
+```
+
+Case history stores compact report metadata rather than raw telemetry. Only recent cases for the current entity are passed to the planner. Historical verdicts are explicitly treated as untrusted context rather than evidence about the current case, so they cannot override current deterministic severity or findings.
+
 ## Tests
 
 ```bash
