@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+import json
 from typing import Any
 
 from .agent import Investigation
@@ -39,21 +40,24 @@ def run_llm_investigation(
     api_key: str,
     model: str,
     max_steps: int = 5,
+    case_history: list[dict[str, Any]] | None = None,
 ) -> AgentReport:
     """Let an LLM choose read-only evidence pivots within strict guardrails."""
     from .llm_agent import choose_tool, execute_decision
+    from .case_memory import prior_cases
 
     if max_steps < 1 or max_steps > 10:
         raise ValueError("max_steps must be between 1 and 10")
 
     steps: list[AgentStep] = []
+    memory = prior_cases(case_history or [], case.entity, limit=5)
     seen_calls: set[str] = set()
     for _ in range(max_steps):
         previous = [asdict(step) for step in steps]
-        decision = choose_tool(case, previous, api_key, model)
+        decision = choose_tool(case, previous, api_key, model, prior_cases=memory)
         if decision is None:
             break
-        call_key = f"{decision.tool}:{decision.arguments}"
+        call_key = f"{decision.tool}:{json.dumps(decision.arguments, sort_keys=True, default=str)}"
         if call_key in seen_calls:
             steps.append(AgentStep(
                 tool=decision.tool,
@@ -83,7 +87,7 @@ def run_llm_investigation(
         steps=steps,
         evidence_summary=(
             f"LLM planner selected {len(steps)} audited tool call(s) returning "
-            f"{evidence_items} evidence item(s). The model cannot execute tools "
+            f"{evidence_items} evidence item(s), with {len(memory)} bounded prior case(s) available as context. The model cannot execute tools "
             "outside the read-only allowlist."
         ),
         recommended_actions=case.recommended_actions,
