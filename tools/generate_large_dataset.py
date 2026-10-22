@@ -32,6 +32,18 @@ def build_dataset(benign_events=3000, seed=42):
             port = [443, 53, 80, 123][i % 4]
             events.append({"timestamp": iso(ts), "source_type": "network", "host": host, "user": user, "src_ip": f"10.0.1.{10 + i % 50}", "dst_ip": f"10.0.2.{10 + i % 100}", "dst_port": port, "action": "allowed", "message": "Routine network connection", "scenario": "benign"})
 
+    # Legitimate activity deliberately shaped like common attack signals.
+    lookalike_base = start + timedelta(hours=22)
+    events.extend([
+        {"timestamp": iso(lookalike_base), "source_type": "endpoint", "host": "admin-ws", "user": "it-admin", "action": "process_start", "command": "powershell.exe Invoke-WebRequest https://intranet.example.invalid/agent.msi -OutFile C:\\Temp\\agent.msi", "message": "Approved software deployment", "scenario": "benign_lookalike_powershell"},
+        {"timestamp": iso(lookalike_base + timedelta(minutes=1)), "source_type": "endpoint", "host": "admin-ws", "user": "it-admin", "action": "process_start", "command": "schtasks /create /tn Inventory /tr C:\\ProgramData\\inventory.exe /sc daily", "message": "Approved inventory task", "scenario": "benign_lookalike_scheduled_task"},
+        {"timestamp": iso(lookalike_base + timedelta(minutes=2)), "source_type": "endpoint", "host": "admin-ws", "user": "it-admin", "action": "process_start", "command": "sc.exe create CorpAgent binPath= C:\\Program Files\\CorpAgent\\agent.exe", "message": "Approved endpoint agent installation", "scenario": "benign_lookalike_service"},
+    ])
+    for j, port in enumerate([21, 22, 23, 25, 53, 80, 135, 139, 443, 445]):
+        events.append({"timestamp": iso(lookalike_base + timedelta(minutes=3, seconds=j * 5)), "source_type": "network", "host": "vuln-scanner-01", "user": "scanner-service", "src_ip": "10.0.9.10", "dst_ip": f"10.0.2.{50+j}", "dst_port": port, "action": "denied", "message": "Approved vulnerability scanner probe", "scenario": "benign_lookalike_scanner"})
+    for j in range(6):
+        events.append({"timestamp": iso(lookalike_base + timedelta(minutes=5, seconds=j * 30)), "source_type": "auth", "host": "sso-01", "user": "locked-user", "src_ip": f"192.0.2.{200+j}", "action": "login_failed", "message": "User entered an expired password", "scenario": "benign_lookalike_login_burst"})
+
     base = start + timedelta(hours=23)
 
     def add(name, rows, rules):
