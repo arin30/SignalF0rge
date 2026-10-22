@@ -73,3 +73,23 @@ def test_choose_tool_rejects_non_object_arguments(monkeypatch):
 
     with pytest.raises(RuntimeError, match="invalid tool arguments"):
         choose_tool(case, [], "test-key", "test-model")
+
+
+def test_choose_tool_includes_bounded_history_as_untrusted_context(monkeypatch):
+    captured = {}
+
+    def fake_request(api_key, model, payload, base_url):
+        captured["payload"] = payload
+        return {"choices": [{"message": {"content": json.dumps({"done": True})}}]}
+
+    monkeypatch.setattr("signalf0rge.llm_agent._request_json", fake_request)
+    case = type("Case", (), {"to_dict": lambda self: {"entity": "alice"}})()
+    history = [{"entity": "alice", "verdict": "escalate"} for _ in range(7)]
+
+    assert choose_tool(case, [], "test-key", "test-model", prior_cases=history) is None
+
+    system = captured["payload"]["messages"][0]["content"]
+    user = json.loads(captured["payload"]["messages"][1]["content"])
+    assert "untrusted context only" in system
+    assert "never proof about current activity" in system
+    assert len(user["prior_cases"]) == 5
