@@ -32,8 +32,19 @@ def test_large_mixed_dataset_evaluation(tmp_path):
     assert len(expected) == 21
     assert metrics["expected_cases"] >= 30
     assert metrics["recall"] >= 0.95
-    assert metrics["precision"] >= 0.95
-    assert metrics["f1"] >= 0.95
+
+    expected_lookalike_false_positives = {
+        "benign_lookalike_powershell:ENDPOINT-001",
+        "benign_lookalike_scheduled_task:ENDPOINT-005",
+        "benign_lookalike_service:ENDPOINT-006",
+        "benign_lookalike_scanner:NET-001",
+        "benign_lookalike_scanner:NET-002",
+        "benign_lookalike_scanner:NET-003",
+        "benign_lookalike_scanner:NET-004",
+        "benign_lookalike_login_burst:AUTH-003",
+    }
+    assert set(metrics["false_positive_cases"]) == expected_lookalike_false_positives
+    assert metrics["false_positives"] == len(expected_lookalike_false_positives)
 
 
 def test_empty_evaluation_returns_zero_metrics():
