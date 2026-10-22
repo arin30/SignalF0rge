@@ -68,6 +68,29 @@ def test_stix_ip_indicator_matches_source_ip(tmp_path):
     assert matches[0].indicator.confidence == 80
 
 
+def test_stix_indicator_matches_both_source_and_destination_ips(tmp_path):
+    bundle = {
+        "type": "bundle",
+        "objects": [{
+            "type": "indicator",
+            "id": "indicator--shared-ip",
+            "pattern": "[ipv4-addr:value = '203.0.113.50']",
+        }],
+    }
+    path = tmp_path / "shared-ip-bundle.json"
+    path.write_text(json.dumps(bundle), encoding="utf-8")
+    event = Event(
+        timestamp=datetime(2026, 8, 17, tzinfo=timezone.utc),
+        source_type="network",
+        src_ip="203.0.113.50",
+        dst_ip="203.0.113.50",
+        raw={},
+    )
+    matches = enrich_events([event], load_stix_bundle(path))
+    assert [match.field for match in matches] == ["src_ip", "dst_ip"]
+    assert all(match.observed_value == "203.0.113.50" for match in matches)
+
+
 def test_stix_ipv6_indicator_matches_source_ip(tmp_path):
     bundle = {
         "type": "bundle",
