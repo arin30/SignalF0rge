@@ -188,6 +188,36 @@ def test_domain_indicator_matches_case_insensitively(tmp_path):
     assert matches[0].field == "dns_query"
 
 
+
+def test_enrich_events_tracks_matching_event_index(tmp_path):
+    bundle = {
+        "type": "bundle",
+        "objects": [{
+            "type": "indicator",
+            "id": "indicator--indexed-domain",
+            "pattern": "[domain-name:value = 'malicious.example']",
+        }],
+    }
+    path = tmp_path / "indexed-bundle.json"
+    path.write_text(json.dumps(bundle), encoding="utf-8")
+    events = [
+        Event(
+            timestamp=datetime(2026, 8, 17, tzinfo=timezone.utc),
+            source_type="dns",
+            raw={"dns_query": "benign.example"},
+        ),
+        Event(
+            timestamp=datetime(2026, 8, 17, tzinfo=timezone.utc),
+            source_type="dns",
+            raw={"dns_query": "malicious.example"},
+        ),
+    ]
+    matches = enrich_events(events, load_stix_bundle(path))
+    assert [(match.event_index, match.field, match.observed_value) for match in matches] == [
+        (1, "dns_query", "malicious.example")
+    ]
+
+
 def test_url_indicator_does_not_ignore_path_case(tmp_path):
     bundle = {
         "type": "bundle",
