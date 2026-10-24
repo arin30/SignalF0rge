@@ -76,6 +76,21 @@ def test_evaluation_counts_false_positives_and_missed_cases():
     assert metrics["missed_cases"] == ["attack:rule-c"]
 
 
+def test_duplicate_findings_count_as_one_predicted_case():
+    from types import SimpleNamespace
+
+    findings = [
+        SimpleNamespace(rule_id="AUTH-002", evidence=[{"scenario": "credential_stuffing"}]),
+        SimpleNamespace(rule_id="AUTH-002", evidence=[{"scenario": "credential_stuffing"}]),
+    ]
+    metrics = evaluate_findings(findings, {"credential_stuffing": {"AUTH-002"}})
+
+    assert metrics["predicted_cases"] == 1
+    assert metrics["true_positives"] == 1
+    assert metrics["false_positives"] == 0
+    assert metrics["precision"] == 1.0
+
+
 def test_benchmark_combines_detection_and_investigation_scores(tmp_path):
     from signalf0rge.benchmark import benchmark
 
