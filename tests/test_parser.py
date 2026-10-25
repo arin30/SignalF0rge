@@ -106,6 +106,24 @@ def test_load_jsonl_reports_malformed_line_number():
             raise AssertionError("malformed JSONL should raise ValueError")
 
 
+def test_load_jsonl_error_line_counts_blank_lines():
+    with tempfile.TemporaryDirectory() as d:
+        path = Path(d) / "events.jsonl"
+        path.write_text(
+            '\n'
+            '{"timestamp":"2026-08-17T10:00:00Z","source_type":"auth"}\n'
+            '  \n'
+            '{"timestamp":"not-a-timestamp","source_type":"auth"}\n',
+            encoding="utf-8",
+        )
+        try:
+            load_jsonl(path)
+        except ValueError as exc:
+            assert f"{path}:4:" in str(exc)
+        else:
+            raise AssertionError("invalid timestamp should identify its physical line")
+
+
 def test_load_jsonl_rejects_non_string_source_type():
     with tempfile.TemporaryDirectory() as d:
         p = Path(d) / "events.jsonl"
