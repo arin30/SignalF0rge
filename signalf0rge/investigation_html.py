@@ -21,7 +21,7 @@ def write_investigation_html(findings, reports, out_path):
     page = detection_path.read_text(encoding="utf-8")
     cards = []
     for report in reports:
-        data = report.to_dict()
+        data = report if isinstance(report, dict) else report.to_dict()
         entity = _safe(data.get("entity"))
         severity = _safe(data.get("severity", "info")).lower()
         confidence = _safe(data.get("confidence", "unknown"))
