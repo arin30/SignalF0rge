@@ -10,6 +10,7 @@ from .intel import load_stix_bundle, enrich_events, write_intel_matches
 from .evaluate import load_ground_truth, evaluate_findings, write_evaluation
 from .agent import investigate
 from .agent_runner import run_investigation, run_llm_investigation
+from .incident_narrative import generate_narrative
 from .case_memory import append_case_history, load_case_history
 import json
 import os
@@ -46,6 +47,7 @@ def main():
     inv.add_argument("--rules", default="rules.yml")
     inv.add_argument("--out", default="output/investigations.json")
     inv.add_argument("--agent", action="store_true", help="Run read-only investigation tools for each case")\n    inv.add_argument("--llm", action="store_true", help="Let an LLM choose investigation tool calls")\n    inv.add_argument("--model", default="gpt-5-mini", help="OpenAI-compatible model name")
+    inv.add_argument("--narrative", action="store_true", help="Generate evidence-cited LLM incident narratives")
     inv.add_argument("--case-history", help="JSON file for bounded prior investigation metadata")
 
     args = parser.parse_args()
@@ -74,16 +76,21 @@ def main():
         path.parent.mkdir(parents=True, exist_ok=True)
         payload = [case.to_dict() for case in cases]
         reports = []
-        if args.llm:
+        if args.narrative and args.agent:
+            raise SystemExit("--narrative cannot be combined with --agent")
+        if args.llm or args.narrative:
             api_key = os.environ.get("OPENAI_API_KEY")
             if not api_key:
                 raise SystemExit("OPENAI_API_KEY is required with --llm")
             history = load_case_history(args.case_history) if args.case_history else []
-            reports = [
-                run_llm_investigation(case, events, findings, api_key, args.model, case_history=history)
-                for case in cases
-            ]
-            payload = [report.to_dict() for report in reports]
+            if args.narrative:
+                payload = [generate_narrative(case, findings, api_key, args.model).to_dict() for case in cases]
+            else:
+                reports = [
+                    run_llm_investigation(case, events, findings, api_key, args.model, case_history=history)
+                    for case in cases
+                ]
+                payload = [report.to_dict() for report in reports]
         elif args.agent:
             reports = [run_investigation(case, events, findings) for case in cases]
             payload = [report.to_dict() for report in reports]
@@ -94,7 +101,9 @@ def main():
         print(f"Analyzed {len(events)} events")
         print(f"Generated {len(findings)} findings")
         print(f"Built {len(cases)} investigation cases")
-        if args.llm:
+        if args.narrative:
+            print("Generated evidence-cited LLM incident narratives")
+        elif args.llm:
             print("Ran bounded LLM-planned investigation tools")
         elif args.agent:
             print("Ran evidence-grounded investigation tools")
