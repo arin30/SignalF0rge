@@ -143,7 +143,7 @@ def test_load_jsonl_rejects_numeric_timestamp():
     with tempfile.TemporaryDirectory() as d:
         path = Path(d) / "events.jsonl"
         path.write_text(
-            '{"timestamp":20260817,"source_type":"auth"}\\n',
+            '{"timestamp":20260817,"source_type":"auth"}',
             encoding="utf-8",
         )
         try:
