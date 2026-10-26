@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from html import escape
 from pathlib import Path
+from tempfile import TemporaryDirectory
 import json
 
 from .report import write_html
@@ -16,9 +17,10 @@ def write_investigation_html(findings, reports, out_path):
     """Write an offline HTML dashboard with escaped, auditable case evidence."""
     path = Path(out_path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    # Reuse the existing styled, escaped detection report.
-    detection_path = write_html(findings, path.parent)
-    page = detection_path.read_text(encoding="utf-8")
+    # Render privately so the shared template cannot overwrite an analyst's report.
+    with TemporaryDirectory(prefix="signalf0rge-dashboard-") as temporary_dir:
+        detection_path = write_html(findings, temporary_dir)
+        page = detection_path.read_text(encoding="utf-8")
     cards = []
     for report in reports:
         data = report if isinstance(report, dict) else report.to_dict()

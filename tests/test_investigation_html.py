@@ -3,6 +3,22 @@ from signalf0rge.models import Finding
 from signalf0rge.investigation_html import write_investigation_html
 
 
+def test_dashboard_preserves_existing_detection_report(tmp_path):
+    detection_report = tmp_path / "report.html"
+    detection_report.write_text("Existing analyst report", encoding="utf-8")
+
+    result = write_investigation_html([], [], tmp_path / "dashboard.html")
+
+    assert result.is_file()
+    assert "Investigation workspace" in result.read_text(encoding="utf-8")
+    assert detection_report.read_text(encoding="utf-8") == "Existing analyst report"
+
+
+def test_dashboard_does_not_leave_an_extra_detection_report(tmp_path):
+    write_investigation_html([], [], tmp_path / "dashboard.html")
+    assert sorted(path.name for path in tmp_path.iterdir()) == ["dashboard.html"]
+
+
 def test_dashboard_renders_cases_and_escapes_untrusted_evidence(tmp_path):
     finding = Finding(
         "ENDPOINT-001", "Suspicious shell", "Detected", "high", "host-1",
