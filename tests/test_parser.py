@@ -137,3 +137,19 @@ def test_load_jsonl_rejects_non_string_source_type():
             assert "source_type must be a non-empty string" in str(exc)
         else:
             raise AssertionError("non-string source_type should raise ValueError")
+
+
+def test_load_jsonl_rejects_numeric_timestamp():
+    with tempfile.TemporaryDirectory() as d:
+        path = Path(d) / "events.jsonl"
+        path.write_text(
+            '{"timestamp":20260817,"source_type":"auth"}\\n',
+            encoding="utf-8",
+        )
+        try:
+            load_jsonl(path)
+        except ValueError as exc:
+            assert f"{path}:1:" in str(exc)
+            assert "timestamp must be an ISO 8601 string" in str(exc)
+        else:
+            raise AssertionError("numeric timestamps must be rejected")

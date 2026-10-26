@@ -6,6 +6,8 @@ from .models import Event
 REQUIRED_FIELDS = {"timestamp", "source_type"}
 
 def parse_timestamp(value: str) -> datetime:
+    if not isinstance(value, str):
+        raise ValueError("timestamp must be an ISO 8601 string")
     value = value.strip()
     if value.endswith(("Z", "z")): value = value[:-1] + "+00:00"
     dt = datetime.fromisoformat(value)
@@ -18,7 +20,7 @@ def normalize_record(record: dict) -> Event:
     source_type = record["source_type"]
     if not isinstance(source_type, str) or not source_type.strip():
         raise ValueError("source_type must be a non-empty string")
-    return Event(timestamp=parse_timestamp(str(record["timestamp"])), source_type=source_type.strip().lower(), host=record.get("host"), user=record.get("user"), src_ip=record.get("src_ip"), dst_ip=record.get("dst_ip"), dst_port=int(record["dst_port"]) if record.get("dst_port") is not None else None, action=record.get("action"), command=record.get("command"), message=record.get("message"), raw=dict(record))
+    return Event(timestamp=parse_timestamp(record["timestamp"]), source_type=source_type.strip().lower(), host=record.get("host"), user=record.get("user"), src_ip=record.get("src_ip"), dst_ip=record.get("dst_ip"), dst_port=int(record["dst_port"]) if record.get("dst_port") is not None else None, action=record.get("action"), command=record.get("command"), message=record.get("message"), raw=dict(record))
 
 def load_jsonl(path: str | Path) -> list[Event]:
     events = []
