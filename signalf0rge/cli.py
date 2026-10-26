@@ -46,7 +46,9 @@ def main():
     inv.add_argument("--format", choices=["normalized", "windows"], default="normalized")
     inv.add_argument("--rules", default="rules.yml")
     inv.add_argument("--out", default="output/investigations.json")
-    inv.add_argument("--agent", action="store_true", help="Run read-only investigation tools for each case")\n    inv.add_argument("--llm", action="store_true", help="Let an LLM choose investigation tool calls")\n    inv.add_argument("--model", default="gpt-5-mini", help="OpenAI-compatible model name")
+    inv.add_argument("--agent", action="store_true", help="Run read-only investigation tools for each case")
+    inv.add_argument("--llm", action="store_true", help="Let an LLM choose investigation tool calls")
+    inv.add_argument("--model", default="gpt-5-mini", help="OpenAI-compatible model name")
     inv.add_argument("--narrative", action="store_true", help="Generate evidence-cited LLM incident narratives")
     inv.add_argument("--case-history", help="JSON file for bounded prior investigation metadata")
 
