@@ -1,6 +1,24 @@
 import tempfile
+import json
+import pytest
 from pathlib import Path
 from signalf0rge.parser import load_jsonl
+
+
+@pytest.mark.parametrize("port", [-1, 65536, True, False, 443.5, [], {}, "https"])
+def test_invalid_ports_report_the_source_line(tmp_path, port):
+    path = tmp_path / "ports.jsonl"
+    path.write_text(json.dumps({"timestamp": "2026-10-26T10:00:00Z", "source_type": "network", "dst_port": port}), encoding="utf-8")
+    with pytest.raises(ValueError, match="dst_port must be an integer from 0 to 65535") as error:
+        load_jsonl(path)
+    assert f"{path}:1:" in str(error.value)
+
+
+@pytest.mark.parametrize("port, expected", [(0, 0), (65535, 65535), ("443", 443), (None, None)])
+def test_valid_port_boundaries(tmp_path, port, expected):
+    path = tmp_path / "ports.jsonl"
+    path.write_text(json.dumps({"timestamp": "2026-10-26T10:00:00Z", "source_type": "network", "dst_port": port}), encoding="utf-8")
+    assert load_jsonl(path)[0].dst_port == expected
 
 
 def test_load_jsonl():
