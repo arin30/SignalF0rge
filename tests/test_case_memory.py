@@ -1,5 +1,8 @@
 from types import SimpleNamespace
 
+import pytest
+
+from signalf0rge import case_memory
 from signalf0rge.case_memory import append_case_history, load_case_history, prior_cases
 
 
@@ -49,3 +52,56 @@ def test_case_history_enforces_retention_bound(tmp_path):
     history = load_case_history(path)
 
     assert [item["entity"] for item in history] == ["second", "third"]
+
+
+def test_serialization_failure_preserves_history(tmp_path):
+    path = tmp_path / "cases.json"
+    append_case_history(path, _report("first"))
+    original = path.read_bytes()
+
+    with pytest.raises(TypeError):
+        append_case_history(path, _report(object()))
+
+    assert path.read_bytes() == original
+    assert list(tmp_path.iterdir()) == [path]
+
+
+def test_replace_failure_preserves_history_and_removes_temporary_file(tmp_path, monkeypatch):
+    path = tmp_path / "cases.json"
+    append_case_history(path, _report("first"))
+    original = path.read_bytes()
+
+    def fail_replace(source, destination):
+        assert source.parent == path.parent
+        assert destination == path
+        raise OSError("simulated replacement failure")
+
+    monkeypatch.setattr(case_memory.os, "replace", fail_replace)
+    with pytest.raises(OSError, match="simulated replacement failure"):
+        append_case_history(path, _report("second"))
+
+    assert path.read_bytes() == original
+    assert list(tmp_path.iterdir()) == [path]
+
+
+def test_sync_failure_preserves_history_and_removes_temporary_file(tmp_path, monkeypatch):
+    path = tmp_path / "cases.json"
+    append_case_history(path, _report("first"))
+    original = path.read_bytes()
+
+    def fail_sync(fd):
+        raise OSError("simulated disk failure")
+
+    monkeypatch.setattr(case_memory.os, "fsync", fail_sync)
+    with pytest.raises(OSError, match="simulated disk failure"):
+        append_case_history(path, _report("second"))
+
+    assert path.read_bytes() == original
+    assert list(tmp_path.iterdir()) == [path]
+
+
+def test_atomic_save_creates_missing_parent_directories(tmp_path):
+    path = tmp_path / "nested" / "cases.json"
+    append_case_history(path, _report())
+    assert load_case_history(path)[0]["entity"] == "alice"
+    assert list(path.parent.iterdir()) == [path]

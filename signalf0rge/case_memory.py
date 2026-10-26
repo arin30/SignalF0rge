@@ -8,6 +8,8 @@ LLM unrestricted long-term memory.
 from __future__ import annotations
 
 import json
+import os
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -42,7 +44,23 @@ def append_case_history(path: str | Path, report: Any, max_entries: int = 100) -
     history.append(case_snapshot(report))
     history = history[-max_entries:]
     history_path.parent.mkdir(parents=True, exist_ok=True)
-    history_path.write_text(json.dumps(history, indent=2) + "\n", encoding="utf-8")
+    # Serialize before opening a file, then replace only after a complete write.
+    # A failed save must not truncate previously collected investigation history.
+    payload = json.dumps(history, indent=2) + "\n"
+    temporary_path = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", dir=history_path.parent,
+            prefix=f".{history_path.name}.", suffix=".tmp", delete=False,
+        ) as temporary:
+            temporary_path = Path(temporary.name)
+            temporary.write(payload)
+            temporary.flush()
+            os.fsync(temporary.fileno())
+        os.replace(temporary_path, history_path)
+    finally:
+        if temporary_path is not None:
+            temporary_path.unlink(missing_ok=True)
 
 
 def prior_cases(history: list[dict[str, Any]], entity: str, limit: int = 5) -> list[dict[str, Any]]:
