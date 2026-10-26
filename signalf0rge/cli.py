@@ -11,6 +11,7 @@ from .evaluate import load_ground_truth, evaluate_findings, write_evaluation
 from .agent import investigate
 from .agent_runner import run_investigation, run_llm_investigation
 from .incident_narrative import generate_narrative
+from .investigation_html import write_investigation_html
 from .case_memory import append_case_history, load_case_history
 import json
 import os
@@ -50,6 +51,7 @@ def main():
     inv.add_argument("--llm", action="store_true", help="Let an LLM choose investigation tool calls")
     inv.add_argument("--model", default="gpt-5-mini", help="OpenAI-compatible model name")
     inv.add_argument("--narrative", action="store_true", help="Generate evidence-cited LLM incident narratives")
+    inv.add_argument("--html", help="Write an offline HTML investigation dashboard to this path")
     inv.add_argument("--case-history", help="JSON file for bounded prior investigation metadata")
 
     args = parser.parse_args()
@@ -100,6 +102,9 @@ def main():
             for report in reports:
                 append_case_history(args.case_history, report)
         path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        if args.html:
+            dashboard = write_investigation_html(findings, reports if reports else (payload if args.narrative else cases), args.html)
+            print(f"HTML dashboard: {dashboard}")
         print(f"Analyzed {len(events)} events")
         print(f"Generated {len(findings)} findings")
         print(f"Built {len(cases)} investigation cases")
