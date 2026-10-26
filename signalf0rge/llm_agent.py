@@ -37,7 +37,11 @@ def _request_json(api_key: str, model: str, payload: dict[str, Any], base_url: s
     )
     try:
         with urllib.request.urlopen(request, timeout=30) as response:
-            return json.loads(response.read().decode("utf-8"))
+            # Bound provider output before decoding to avoid memory exhaustion.
+            raw = response.read(1_048_577)
+            if len(raw) > 1_048_576:
+                raise RuntimeError("LLM response exceeds the 1 MiB safety limit")
+            return json.loads(raw.decode("utf-8"))
     except (urllib.error.URLError, json.JSONDecodeError) as exc:
         raise RuntimeError(f"LLM request failed: {exc}") from exc
 
@@ -112,7 +116,13 @@ def execute_decision(
     if decision.tool == "search_events":
         field = decision.arguments.get("field")
         value = decision.arguments.get("value")
-        if field not in {"user", "host", "src_ip", "dst_ip"} or value in (None, ""):
+        if (
+            not isinstance(field, str)
+            or field not in {"user", "host", "src_ip", "dst_ip"}
+            or not isinstance(value, str)
+            or not value.strip()
+            or len(value) > 256
+        ):
             raise RuntimeError("Invalid search_events arguments")
         return search_events(events, **{field: value})
     raise RuntimeError("Unsupported tool")
