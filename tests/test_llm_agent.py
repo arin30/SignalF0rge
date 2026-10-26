@@ -93,3 +93,30 @@ def test_choose_tool_includes_bounded_history_as_untrusted_context(monkeypatch):
     assert "untrusted context only" in system
     assert "never proof about current activity" in system
     assert len(user["prior_cases"]) == 5
+
+
+
+@pytest.mark.parametrize("value", [123, ["alice"], {"user": "alice"}, "", " ", "x" * 257])
+def test_execute_llm_search_rejects_invalid_pivot_values(value):
+    decision = LLMDecision("search_events", {"field": "user", "value": value}, "pivot")
+    with pytest.raises(RuntimeError, match="Invalid search_events arguments"):
+        execute_decision(decision, [], [_finding()], "alice")
+
+
+def test_provider_response_size_is_bounded(monkeypatch):
+    from signalf0rge.llm_agent import _request_json
+
+    class FakeResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def read(self, size):
+            assert size == 1_048_577
+            return b"x" * size
+
+    monkeypatch.setattr("signalf0rge.llm_agent.urllib.request.urlopen", lambda *_args, **_kwargs: FakeResponse())
+    with pytest.raises(RuntimeError, match="exceeds the 1 MiB safety limit"):
+        _request_json("test-key", "test-model", {}, "https://example.invalid/v1")
