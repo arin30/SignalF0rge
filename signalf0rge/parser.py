@@ -10,6 +10,8 @@ def parse_port(value) -> int | None:
         return None
     if isinstance(value, bool) or not isinstance(value, (int, str)):
         raise ValueError("dst_port must be an integer from 0 to 65535")
+    if isinstance(value, str) and "_" in value:
+        raise ValueError("dst_port must be an integer from 0 to 65535")
     try:
         port = int(value)
     except ValueError as exc:

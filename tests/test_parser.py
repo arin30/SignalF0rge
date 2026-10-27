@@ -5,7 +5,7 @@ from pathlib import Path
 from signalf0rge.parser import load_jsonl
 
 
-@pytest.mark.parametrize("port", [-1, 65536, True, False, 443.5, [], {}, "https"])
+@pytest.mark.parametrize("port", [-1, 65536, True, False, 443.5, [], {}, "https", "4_43", "1_0"])
 def test_invalid_ports_report_the_source_line(tmp_path, port):
     path = tmp_path / "ports.jsonl"
     path.write_text(json.dumps({"timestamp": "2026-10-26T10:00:00Z", "source_type": "network", "dst_port": port}), encoding="utf-8")
