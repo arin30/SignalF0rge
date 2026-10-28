@@ -84,8 +84,8 @@ def test_windows_sysmon_sample_drives_detection_and_incident_correlation():
 @pytest.mark.parametrize(
     "target_image, flagged",
     [
-        (r"C:\\Windows\\System32\\LSASS.EXE", True),
-        (r"C:\\Windows\\System32\\notepad.exe", False),
+        (r"C:\Windows\System32\LSASS.EXE", True),
+        (r"C:\Windows\System32\notepad.exe", False),
     ],
 )
 def test_windows_process_access_flags_only_lsass_targets(target_image, flagged):
