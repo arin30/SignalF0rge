@@ -4,7 +4,7 @@ import pytest
 
 from signalf0rge.engine import analyze
 from signalf0rge.rules import load_rules
-from signalf0rge.telemetry import load_windows_jsonl
+from signalf0rge.telemetry import load_windows_jsonl, normalize_windows_record
 
 
 def test_windows_sysmon_adapter_normalizes_security_events():
@@ -79,3 +79,26 @@ def test_windows_sysmon_sample_drives_detection_and_incident_correlation():
     assert incident.evidence_count == 4
     assert incident.score == 100
     assert all("correlation_id" not in evidence for evidence in incident.evidence)
+
+
+@pytest.mark.parametrize(
+    "target_image, flagged",
+    [
+        (r"C:\\Windows\\System32\\LSASS.EXE", True),
+        (r"C:\\Windows\\System32\\notepad.exe", False),
+    ],
+)
+def test_windows_process_access_flags_only_lsass_targets(target_image, flagged):
+    record = {
+        "EventID": 10,
+        "UtcTime": "2026-09-08T12:00:00Z",
+        "TargetImage": target_image,
+        "Message": "Process access",
+    }
+
+    event = normalize_windows_record(record)
+
+    assert event.source_type == "endpoint"
+    assert event.action == "process_access"
+    assert ("Suspicious access to LSASS detected" in event.message) is flagged
+    assert event.get("raw_event") == record
