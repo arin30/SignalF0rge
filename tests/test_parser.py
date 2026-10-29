@@ -157,6 +157,21 @@ def test_load_jsonl_rejects_non_string_source_type():
             raise AssertionError("non-string source_type should raise ValueError")
 
 
+@pytest.mark.parametrize("missing_field", ["timestamp", "source_type"])
+def test_load_jsonl_reports_missing_required_field_and_line(tmp_path, missing_field):
+    path = tmp_path / "missing-field.jsonl"
+    record = {"timestamp": "2026-10-29T10:00:00Z", "source_type": "auth"}
+    del record[missing_field]
+    path.write_text("\n" + json.dumps(record) + "\n", encoding="utf-8")
+
+    with pytest.raises(ValueError) as error:
+        load_jsonl(path)
+
+    assert f"{path}:2:" in str(error.value)
+    assert "Missing required fields" in str(error.value)
+    assert missing_field in str(error.value)
+
+
 def test_load_jsonl_rejects_numeric_timestamp():
     with tempfile.TemporaryDirectory() as d:
         path = Path(d) / "events.jsonl"
