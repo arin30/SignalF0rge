@@ -240,3 +240,27 @@ def test_url_indicator_does_not_ignore_path_case(tmp_path):
     )
 
     assert enrich_events([event], load_stix_bundle(path)) == []
+
+def test_stix_domain_indicator_does_not_match_ip_observable(tmp_path):
+    bundle = {
+        "type": "bundle",
+        "objects": [{
+            "type": "indicator",
+            "id": "indicator--domain-not-ip",
+            "pattern": "[domain-name:value = '203.0.113.50']",
+        }],
+    }
+    path = tmp_path / "typed-indicator.json"
+    path.write_text(json.dumps(bundle), encoding="utf-8")
+    event = Event(
+        timestamp=datetime(2026, 8, 17, tzinfo=timezone.utc),
+        source_type="dns",
+        src_ip="203.0.113.50",
+        raw={"dns_query": "203.0.113.50"},
+    )
+
+    matches = enrich_events([event], load_stix_bundle(path))
+    assert [(match.field, match.indicator.id) for match in matches] == [
+        ("dns_query", "indicator--domain-not-ip")
+    ]
+
