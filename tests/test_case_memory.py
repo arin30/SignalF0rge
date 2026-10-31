@@ -100,6 +100,20 @@ def test_sync_failure_preserves_history_and_removes_temporary_file(tmp_path, mon
     assert list(tmp_path.iterdir()) == [path]
 
 
+
+@pytest.mark.parametrize("max_entries", [0, -1, 1001])
+def test_invalid_retention_bound_does_not_modify_history(tmp_path, max_entries):
+    path = tmp_path / "cases.json"
+    append_case_history(path, _report("original"))
+    original = path.read_bytes()
+
+    with pytest.raises(ValueError, match="max_entries"):
+        append_case_history(path, _report("new"), max_entries=max_entries)
+
+    assert path.read_bytes() == original
+    assert [item["entity"] for item in load_case_history(path)] == ["original"]
+
+
 def test_atomic_save_creates_missing_parent_directories(tmp_path):
     path = tmp_path / "nested" / "cases.json"
     append_case_history(path, _report())
