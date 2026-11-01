@@ -53,3 +53,20 @@ def test_traverse_entities_rejects_unbounded_requests():
         assert "max_depth" in str(exc)
     else:
         raise AssertionError("expected traversal depth validation")
+
+def test_link_entities_keeps_relationship_types_separate():
+    events = [
+        Event(datetime(2026, 11, 1, 10), "auth", user="alice", src_ip="10.0.0.42"),
+        Event(datetime(2026, 11, 1, 11), "network", user="alice", dst_ip="10.0.0.42"),
+        Event(datetime(2026, 11, 1, 12), "auth", user="bob", src_ip="203.0.113.5"),
+    ]
+
+    links = link_entities(events, "alice")
+
+    assert {
+        (link.source, link.target, link.relationship, link.observations)
+        for link in links
+    } == {
+        ("alice", "10.0.0.42", "user->src_ip", 1),
+        ("alice", "10.0.0.42", "user->dst_ip", 1),
+    }
