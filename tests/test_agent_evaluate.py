@@ -35,6 +35,28 @@ def test_agent_evaluation_detects_budget_and_verdict_failures():
     assert result["verdict_grounded"] is False
 
 
+def test_agent_evaluation_with_no_expected_tools_or_calls():
+    result = evaluate_agent_report(_report([]), expected_tools=set(), max_steps=1)
+
+    assert result["tool_calls"] == 0
+    assert result["unique_tools"] == 0
+    assert result["useful_pivot_rate"] == 1.0
+    assert result["missing_expected_pivots"] == []
+    assert result["redundant_calls"] == 0
+    assert result["within_budget"] is True
+
+
+def test_agent_evaluation_with_no_calls_reports_missing_expected_pivots():
+    result = evaluate_agent_report(
+        _report([]), expected_tools={"search_events", "map_attack"}, max_steps=1
+    )
+
+    assert result["useful_pivot_rate"] == 0.0
+    assert result["missing_expected_pivots"] == ["map_attack", "search_events"]
+    assert result["within_budget"] is True
+
+
+
 def test_agent_evaluation_aggregates_cases():
     results = [
         evaluate_agent_report(_report(["a"]), {"a"}, expected_verdict="escalate"),
