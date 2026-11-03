@@ -45,6 +45,17 @@ def test_load_jsonl_ignores_blank_lines_and_sorts_by_timestamp():
         assert events[0].timestamp <= events[1].timestamp
 
 
+
+def test_load_jsonl_preserves_input_order_for_equal_timestamps(tmp_path):
+    path = tmp_path / "equal-timestamps.jsonl"
+    path.write_text(
+        '\n'.join(json.dumps({"timestamp": "2026-11-03T10:00:00Z", "source_type": "auth", "action": action})
+                  for action in ("first", "second", "third")) + '\n',
+        encoding="utf-8",
+    )
+    assert [event.action for event in load_jsonl(path)] == ["first", "second", "third"]
+
+
 def test_load_jsonl_normalizes_timezone_offsets_to_utc():
     with tempfile.TemporaryDirectory() as d:
         p = Path(d) / "events.jsonl"
