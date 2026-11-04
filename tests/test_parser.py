@@ -197,3 +197,14 @@ def test_load_jsonl_rejects_numeric_timestamp():
             assert "timestamp must be an ISO 8601 string" in str(exc)
         else:
             raise AssertionError("numeric timestamps must be rejected")
+
+
+def test_load_jsonl_sorts_equivalent_timezone_offsets_stably(tmp_path):
+    path = tmp_path / "offset-order.jsonl"
+    records = [
+        {"timestamp": "2026-11-04T10:00:00Z", "source_type": "auth", "action": "first"},
+        {"timestamp": "2026-11-04T03:00:00-07:00", "source_type": "auth", "action": "second"},
+        {"timestamp": "2026-11-04T09:59:59Z", "source_type": "auth", "action": "earlier"},
+    ]
+    path.write_text("\n".join(json.dumps(record) for record in records) + "\n", encoding="utf-8")
+    assert [event.action for event in load_jsonl(path)] == ["earlier", "first", "second"]
