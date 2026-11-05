@@ -208,3 +208,9 @@ def test_load_jsonl_sorts_equivalent_timezone_offsets_stably(tmp_path):
     ]
     path.write_text("\n".join(json.dumps(record) for record in records) + "\n", encoding="utf-8")
     assert [event.action for event in load_jsonl(path)] == ["earlier", "first", "second"]
+
+
+def test_load_jsonl_with_only_blank_lines_returns_no_events(tmp_path):
+    path = tmp_path / "blank-only.jsonl"
+    path.write_text("\n  \n\t\n", encoding="utf-8")
+    assert load_jsonl(path) == []
