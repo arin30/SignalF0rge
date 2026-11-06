@@ -210,6 +210,16 @@ def test_load_jsonl_sorts_equivalent_timezone_offsets_stably(tmp_path):
     assert [event.action for event in load_jsonl(path)] == ["earlier", "first", "second"]
 
 
+def test_load_jsonl_accepts_crlf_line_endings(tmp_path):
+    path = tmp_path / "windows-events.jsonl"
+    records = [
+        {"timestamp": "2026-11-06T10:01:00Z", "source_type": "endpoint", "action": "later"},
+        {"timestamp": "2026-11-06T10:00:00Z", "source_type": "auth", "action": "earlier"},
+    ]
+    path.write_bytes(("\r\n".join(json.dumps(record) for record in records) + "\r\n").encode("utf-8"))
+    assert [event.action for event in load_jsonl(path)] == ["earlier", "later"]
+
+
 def test_load_jsonl_with_only_blank_lines_returns_no_events(tmp_path):
     path = tmp_path / "blank-only.jsonl"
     path.write_text("\n  \n\t\n", encoding="utf-8")
