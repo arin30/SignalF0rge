@@ -22,3 +22,10 @@ def test_severity_score_increases_with_evidence_and_caps_at_100():
     assert severity_score("high", 1) == 75
     assert severity_score("high", 4) == 81
     assert severity_score("critical", 10) == 100
+
+
+def test_severity_score_normalizes_case_and_ignores_nonpositive_evidence():
+    assert severity_score(" HIGH ", 2) == 77
+    assert severity_score("low", 0) == 25
+    assert severity_score("low", -3) == 25
+    assert severity_score("unrecognized", 1) == 25
