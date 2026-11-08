@@ -29,3 +29,10 @@ def test_severity_score_normalizes_case_and_ignores_nonpositive_evidence():
     assert severity_score("low", 0) == 25
     assert severity_score("low", -3) == 25
     assert severity_score("unrecognized", 1) == 25
+
+
+def test_entity_for_uses_fallback_when_preferred_value_is_missing():
+    event = {"host": "", "user": "alice", "src_ip": "192.0.2.10"}
+
+    assert entity_for(event, "host") == "user:alice"
+    assert entity_for(event, "not_present") == "user:alice"
