@@ -1,4 +1,5 @@
 import json
+import ntpath
 from pathlib import Path
 from .models import Event
 from .parser import parse_timestamp, normalize_record
@@ -61,7 +62,7 @@ def normalize_windows_record(record: dict) -> Event:
 
     if event_id == 10:
         target_image = str(_first(record, "TargetImage") or "")
-        if "lsass.exe" in target_image.lower():
+        if ntpath.basename(target_image).lower() == "lsass.exe":
             message = (message + " Suspicious access to LSASS detected").strip()
 
     if command is None and event_id == 1:

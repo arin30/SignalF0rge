@@ -86,6 +86,10 @@ def test_windows_sysmon_sample_drives_detection_and_incident_correlation():
     [
         (r"C:\Windows\System32\LSASS.EXE", True),
         (r"C:\Windows\System32\notepad.exe", False),
+        (r"C:\Tools\lsass.exe.backup", False),
+        (r"C:\lsass.exe\notepad.exe", False),
+        (r"C:\Tools\notlsass.exe", False),
+        ("/windows/system32/lsass.exe", True),
     ],
 )
 def test_windows_process_access_flags_only_lsass_targets(target_image, flagged):
