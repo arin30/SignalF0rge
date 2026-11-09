@@ -36,7 +36,7 @@ def normalize_windows_record(record: dict) -> Event:
     user = _first(record, "TargetUserName", "User", "SubjectUserName", "user")
     src_ip = _first(record, "IpAddress", "SourceIp", "SourceIP", "src_ip")
     dst_ip = _first(record, "DestinationIp", "DestinationIP", "dst_ip")
-    dst_port = _int_or_none(_first(record, "DestinationPort", "dst_port"))
+    dst_port = _first(record, "DestinationPort", "dst_port")
     command = _first(record, "CommandLine", "command")
     image = _first(record, "Image", "SourceImage")
     message = str(_first(record, "Message", "message") or "")

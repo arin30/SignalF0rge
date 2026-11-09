@@ -106,3 +106,21 @@ def test_windows_process_access_flags_only_lsass_targets(target_image, flagged):
     assert event.action == "process_access"
     assert ("Suspicious access to LSASS detected" in event.message) is flagged
     assert event.get("raw_event") == record
+
+
+@pytest.mark.parametrize("port", [True, False, 443.5, "4_43"])
+def test_windows_adapter_rejects_invalid_port_without_coercion(port):
+    with pytest.raises(ValueError, match="dst_port must be an integer"):
+        normalize_windows_record({
+            "EventID": 3, "UtcTime": "2026-11-09T10:00:00Z",
+            "DestinationPort": port,
+        })
+
+
+@pytest.mark.parametrize("port, expected", [("443", 443), (0, 0), ("-", None), (65535, 65535)])
+def test_windows_adapter_preserves_valid_and_missing_ports(port, expected):
+    event = normalize_windows_record({
+        "EventID": 3, "UtcTime": "2026-11-09T10:00:00Z",
+        "DestinationPort": port,
+    })
+    assert event.dst_port == expected
