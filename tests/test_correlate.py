@@ -36,3 +36,10 @@ def test_entity_for_uses_fallback_when_preferred_value_is_missing():
 
     assert entity_for(event, "host") == "user:alice"
     assert entity_for(event, "not_present") == "user:alice"
+
+
+def test_entity_for_fallback_respects_identity_priority():
+    event = {"dst_ip": "203.0.113.8", "src_ip": "192.0.2.4", "host": "ws-02"}
+
+    assert entity_for(event, "missing") == "host:ws-02"
+    assert entity_for({"dst_ip": "203.0.113.8", "src_ip": "192.0.2.4"}) == "src_ip:192.0.2.4"
