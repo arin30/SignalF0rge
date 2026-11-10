@@ -43,3 +43,10 @@ def test_entity_for_fallback_respects_identity_priority():
 
     assert entity_for(event, "missing") == "host:ws-02"
     assert entity_for({"dst_ip": "203.0.113.8", "src_ip": "192.0.2.4"}) == "src_ip:192.0.2.4"
+
+
+def test_severity_score_saturates_without_wrapping_for_large_evidence_counts():
+    # Large correlation batches must not produce scores above the documented cap.
+    assert severity_score("critical", 1_000_000) == 100
+    assert severity_score("high", 1_000_000) == 100
+    assert severity_score("low", 1_000_000) == 100
