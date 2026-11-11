@@ -50,3 +50,10 @@ def test_severity_score_saturates_without_wrapping_for_large_evidence_counts():
     assert severity_score("critical", 1_000_000) == 100
     assert severity_score("high", 1_000_000) == 100
     assert severity_score("low", 1_000_000) == 100
+
+
+def test_severity_score_uses_distinct_info_and_medium_baselines():
+    assert severity_score("info", 1) == 10
+    assert severity_score("info", 3) == 14
+    assert severity_score("medium", 1) == 50
+    assert severity_score("medium", 3) == 54
