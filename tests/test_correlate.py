@@ -57,3 +57,10 @@ def test_severity_score_uses_distinct_info_and_medium_baselines():
     assert severity_score("info", 3) == 14
     assert severity_score("medium", 1) == 50
     assert severity_score("medium", 3) == 54
+
+
+def test_entity_for_explicit_preference_overrides_default_identity_order():
+    event = {"user": "alice", "host": "ws-01", "src_ip": "192.0.2.10"}
+
+    assert entity_for(event, "src_ip") == "src_ip:192.0.2.10"
+    assert entity_for(event) == "user:alice"
