@@ -64,3 +64,10 @@ def test_entity_for_explicit_preference_overrides_default_identity_order():
 
     assert entity_for(event, "src_ip") == "src_ip:192.0.2.10"
     assert entity_for(event) == "user:alice"
+
+
+def test_entity_for_uses_destination_ip_as_last_available_identity():
+    event = {"user": "", "host": None, "src_ip": "", "dst_ip": "203.0.113.42"}
+
+    assert entity_for(event) == "dst_ip:203.0.113.42"
+    assert entity_for(event, "host") == "dst_ip:203.0.113.42"
