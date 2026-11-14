@@ -71,3 +71,10 @@ def test_entity_for_uses_destination_ip_as_last_available_identity():
 
     assert entity_for(event) == "dst_ip:203.0.113.42"
     assert entity_for(event, "host") == "dst_ip:203.0.113.42"
+
+
+def test_entity_for_prefers_destination_when_explicitly_requested():
+    event = {"user": "alice", "host": "ws-01", "dst_ip": "203.0.113.9"}
+
+    assert entity_for(event, "dst_ip") == "dst_ip:203.0.113.9"
+    assert entity_for(event, "src_ip") == "user:alice"
