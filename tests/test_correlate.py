@@ -78,3 +78,15 @@ def test_entity_for_prefers_destination_when_explicitly_requested():
 
     assert entity_for(event, "dst_ip") == "dst_ip:203.0.113.9"
     assert entity_for(event, "src_ip") == "user:alice"
+
+
+def test_entity_for_unknown_when_preferred_and_fallbacks_are_unavailable():
+    event = {"user": "", "host": None, "src_ip": "", "dst_ip": None}
+
+    assert entity_for(event, "missing") == "event:unknown"
+    assert entity_for(event) == "event:unknown"
+
+
+def test_critical_severity_with_no_evidence_keeps_baseline():
+    assert severity_score("critical", 0) == 95
+    assert severity_score("critical", -10) == 95
