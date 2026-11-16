@@ -90,3 +90,11 @@ def test_entity_for_unknown_when_preferred_and_fallbacks_are_unavailable():
 def test_critical_severity_with_no_evidence_keeps_baseline():
     assert severity_score("critical", 0) == 95
     assert severity_score("critical", -10) == 95
+
+
+def test_entity_for_supports_custom_preferred_identity_without_changing_fallback():
+    event = {"user": "alice", "session_id": "session-42"}
+
+    assert entity_for(event, "session_id") == "session_id:session-42"
+    assert entity_for(event, "missing_session") == "user:alice"
+    assert entity_for(event) == "user:alice"
