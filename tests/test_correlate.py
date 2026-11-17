@@ -98,3 +98,10 @@ def test_entity_for_supports_custom_preferred_identity_without_changing_fallback
     assert entity_for(event, "session_id") == "session_id:session-42"
     assert entity_for(event, "missing_session") == "user:alice"
     assert entity_for(event) == "user:alice"
+
+
+def test_entity_for_does_not_use_falsey_preferred_identity():
+    event = {"user": "alice", "session_id": 0, "host": "ws-01"}
+
+    assert entity_for(event, "session_id") == "user:alice"
+    assert entity_for({"session_id": 0}, "session_id") == "event:unknown"
