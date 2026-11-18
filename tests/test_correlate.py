@@ -105,3 +105,12 @@ def test_entity_for_does_not_use_falsey_preferred_identity():
 
     assert entity_for(event, "session_id") == "user:alice"
     assert entity_for({"session_id": 0}, "session_id") == "event:unknown"
+
+
+def test_severity_score_caps_at_exact_evidence_threshold():
+    # High severity reaches 99 before saturating; the next item caps at 100.
+    assert severity_score("high", 13) == 99
+    assert severity_score("high", 14) == 100
+    # Critical severity reaches the cap sooner because its baseline is 95.
+    assert severity_score("critical", 3) == 99
+    assert severity_score("critical", 4) == 100
