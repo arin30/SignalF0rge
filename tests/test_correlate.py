@@ -114,3 +114,10 @@ def test_severity_score_caps_at_exact_evidence_threshold():
     # Critical severity reaches the cap sooner because its baseline is 95.
     assert severity_score("critical", 3) == 99
     assert severity_score("critical", 4) == 100
+
+
+def test_severity_score_normalizes_mixed_case_and_whitespace_for_all_levels():
+    # Normalization must not silently downgrade recognized alert severities.
+    for level, baseline in (("INFO", 10), ("LoW", 25), ("MeDiUm", 50),
+                            ("HiGh", 75), ("CrItIcAl", 95)):
+        assert severity_score(f"  {level}\t", 1) == baseline
