@@ -121,3 +121,11 @@ def test_severity_score_normalizes_mixed_case_and_whitespace_for_all_levels():
     for level, baseline in (("INFO", 10), ("LoW", 25), ("MeDiUm", 50),
                             ("HiGh", 75), ("CrItIcAl", 95)):
         assert severity_score(f"  {level}\t", 1) == baseline
+
+
+def test_severity_scores_are_monotonic_across_evidence_counts():
+    # Additional correlated evidence must never lower an alert's score.
+    for severity in ("info", "low", "medium", "high", "critical"):
+        scores = [severity_score(severity, count) for count in range(0, 51)]
+        assert scores == sorted(scores)
+        assert all(0 <= score <= 100 for score in scores)
