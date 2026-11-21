@@ -129,3 +129,12 @@ def test_severity_scores_are_monotonic_across_evidence_counts():
         scores = [severity_score(severity, count) for count in range(0, 51)]
         assert scores == sorted(scores)
         assert all(0 <= score <= 100 for score in scores)
+
+
+def test_severity_score_first_evidence_does_not_inflate_baseline():
+    # A single observation establishes the baseline; only additional evidence adds weight.
+    for level, baseline in (("info", 10), ("low", 25), ("medium", 50),
+                            ("high", 75), ("critical", 95)):
+        assert severity_score(level, 0) == baseline
+        assert severity_score(level, 1) == baseline
+        assert severity_score(level, 2) == min(100, baseline + 2)
