@@ -138,3 +138,10 @@ def test_severity_score_first_evidence_does_not_inflate_baseline():
         assert severity_score(level, 0) == baseline
         assert severity_score(level, 1) == baseline
         assert severity_score(level, 2) == min(100, baseline + 2)
+
+
+def test_unrecognized_severity_uses_low_baseline_with_evidence_weight():
+    # Unknown levels retain the low-severity fallback even with multiple observations.
+    assert severity_score("unknown", 1) == 25
+    assert severity_score(" UNKNOWN ", 3) == 29
+    assert severity_score("unknown", 100) == 100
