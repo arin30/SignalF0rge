@@ -145,3 +145,11 @@ def test_unrecognized_severity_uses_low_baseline_with_evidence_weight():
     assert severity_score("unknown", 1) == 25
     assert severity_score(" UNKNOWN ", 3) == 29
     assert severity_score("unknown", 100) == 100
+
+
+def test_entity_for_prefers_host_over_network_addresses_without_user():
+    # Host correlation must win over IP addresses when no user is present.
+    event = {"host": "server-7", "src_ip": "192.0.2.7", "dst_ip": "203.0.113.7"}
+    assert entity_for(event) == "host:server-7"
+    assert entity_for(event, "unavailable") == "host:server-7"
+    assert entity_for(event, "dst_ip") == "dst_ip:203.0.113.7"
