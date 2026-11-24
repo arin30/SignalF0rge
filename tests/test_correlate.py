@@ -153,3 +153,9 @@ def test_entity_for_prefers_host_over_network_addresses_without_user():
     assert entity_for(event) == "host:server-7"
     assert entity_for(event, "unavailable") == "host:server-7"
     assert entity_for(event, "dst_ip") == "dst_ip:203.0.113.7"
+
+
+def test_entity_for_preserves_nonzero_numeric_custom_identity():
+    event = {"session_id": 42, "user": "alice"}
+    assert entity_for(event, "session_id") == "session_id:42"
+    assert entity_for(event) == "user:alice"
