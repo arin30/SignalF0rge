@@ -159,3 +159,9 @@ def test_entity_for_preserves_nonzero_numeric_custom_identity():
     event = {"session_id": 42, "user": "alice"}
     assert entity_for(event, "session_id") == "session_id:42"
     assert entity_for(event) == "user:alice"
+
+
+def test_entity_for_preserves_identity_namespace():
+    event = {"user": "shared", "host": "shared"}
+    assert entity_for(event, "user") != entity_for(event, "host")
+    assert entity_for(event, "host") == "host:shared"
