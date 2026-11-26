@@ -165,3 +165,11 @@ def test_entity_for_preserves_identity_namespace():
     event = {"user": "shared", "host": "shared"}
     assert entity_for(event, "user") != entity_for(event, "host")
     assert entity_for(event, "host") == "host:shared"
+
+
+def test_entity_for_leaves_event_unchanged():
+    event = {"user": "alice", "host": "ws-01", "session_id": 42}
+    original = event.copy()
+    assert entity_for(event, "session_id") == "session_id:42"
+    assert entity_for(event, "missing") == "user:alice"
+    assert event == original
