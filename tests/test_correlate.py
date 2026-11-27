@@ -173,3 +173,8 @@ def test_entity_for_leaves_event_unchanged():
     assert entity_for(event, "session_id") == "session_id:42"
     assert entity_for(event, "missing") == "user:alice"
     assert event == original
+
+
+def test_empty_severity_uses_low_baseline():
+    assert severity_score("", 1) == 25
+    assert severity_score(" \t", 2) == 27
